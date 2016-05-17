@@ -265,7 +265,7 @@ else
     gateway="$resp"
 fi
 
-# Other Installs (Spark, Redis, SBT, Scala, Java, ZeroMQ, MQTT
+# Other Installs (Spark, Redis, SBT, Scala, ZeroMQ, MQTT
 
 echo "====================================================="
 echo -n "Would you like me to get Redis for you ?? [Y/n]: "
@@ -398,7 +398,7 @@ if [ "$bootloader" == "kernel" ]; then
     sed -i sdcard/etc/apt/sources.list -e "s/main/main contrib non-free firmware/"
     echo "deb http://archive.raspberrypi.org/debian/ jessie main" >> sdcard/etc/apt/sources.list
 else
-    rasp_stuff+=" raspberrypi-bootloader-nokernel linux-image-$rpi_version-rpfv hardlink"
+    rasp_stuff+=" raspberrypi-bootloader-nokernel linux-image-$rpi_version-rpfv hardlink oracle-java8-jdk"
     echo -n "Creating preference for libraspberrypi-bin... "
     echo "# This sets the preference for the kernel version lower so the no-kernel are used" > sdcard/etc/apt/preferences.d/02VideoCore.pref
     echo "Package: libraspberrypi-bin libraspberrypi0 libraspberrypi-dev libraspberrypi-doc"  >> sdcard/etc/apt/preferences.d/02VideoCore.pref
