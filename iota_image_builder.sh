@@ -238,6 +238,13 @@ else
     root_password="$resp"
 fi
 
+echo -n "Please enter the wifi name: [Enter if you don't want to configure wifi now]"
+read resp_wifi_name
+if [ "$resp_wifi_name" != "" ]; then
+    echo -n "Please enter the wifi password: "
+    read resp_wifi_passwd
+fi
+
 echo -n "Enabe DHCP for networking [Y/n]? : "
 read resp
 if [ "$resp" = "" ] || [ "$resp" = "y" ] || [ "$resp" = "yes" ]; then
@@ -258,9 +265,26 @@ else
     gateway="$resp"
 fi
 
+# Other Installs (Spark, Redis, SBT, Scala, Java, ZeroMQ, MQTT
+
+echo "====================================================="
+echo -n "Would you like me to get Redis for you ?? [Y/n]: "
+read resp_redis
+echo -n "Would you like me to get Scala for you ?? [Y/n]: "
+read resp_scala
+echo -n "Would you like me to get Spark for you ?? [Y/n]: "
+read resp_spark
+echo -n "Would you like me to get ZeroMQ for you ?? [Y/n]: "
+read resp_zeromq
+echo -n "Would you like me to get MQTT for you ?? [Y/n]: "
+read resp_mqtt
+echo -n "Would you like me to get Cockroachdb for you ?? [Y/n]: "
+read resp_cockroach
+
+
 # Create image file
 announcement "Creating a zero-filled file $image_name $image_size mega blocks big"
-dd if=/dev/zero of=$image_name  bs=1M  count="$image_size" iflag=fullblock
+dd if=/dev/zero of=$image_name  bs=1  count="$image_size" iflag=fullblock seek=1G
 thingy=$image_name
 
 # Create partitions
@@ -272,6 +296,7 @@ if [ "$fdisk_version" -lt 25 ]; then
     fdisk $thingy <<EOF
 o       # clear the in memory partition table
 n       # new partition
+
 +128M   # 128 MB boot parttion
 a       # make a partition bootable
 1       # partition number 1
@@ -285,11 +310,18 @@ else
     fdisk $thingy <<EOF
 o
 n
+
+
+
 +128M
 a
 t
 6
 n
+
+
+
+
 w
 EOF
 fi
@@ -297,7 +329,7 @@ fi
 announcement "Setting up kpartx drive mapper for $image_name" \
              "and define loopback devices for boot & root"
 
-loop_device=$(kpartx -av $image_name | grep p2 | cut -d" " -f8 | awk '{print$1}')
+loop_device=$(kpartx -av $image_name | grep p1 | cut -d" " -f8 | awk '{print$1}')
 echo -n "Loop device is "
 echo $loop_device
 echo -e "\n\nPartprobing $thingy\n"
@@ -585,6 +617,26 @@ echo "modprobe.d/ipv6.conf"
 cat sdcard/etc/modprobe.d/ipv6.conf
 echo " "
 
+# Setup wifi
+if [ "$resp_wifi_name" != "" ]; then
+    echo -e "\nSetting up wifi\n"
+    cat <<EOF >> sdcard/etc/network/interfaces
+allow-hotplug wlan0
+iface wlan0 inet manual
+    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+
+allow-hotplug wlan1
+iface wlan1 inet manual
+    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
+EOF
+    cat <<EOF >> sdcard/etc/wpa_supplicant/wpa_supplicant.conf
+network={
+    ssid="$resp_wifi_name"
+    psk="$resp_wifi_passwd"
+}
+EOF
+fi
+
 # end Networking
 
 # Update and install raspberrypi-bootloader
@@ -611,23 +663,10 @@ echo -e "\n\nOk, Done with raspberrypi-bootloader and other stuff\n\n"
 echo "=====================================================" 
 echo ""
 
-# Other Installs (Spark, Redis, SBT, Scala, Java, ZeroMQ, MQTT
-
-echo "====================================================="
-echo -n "Would you like me to get Redis for you ?? [Y/n]: "
-read resp_redis
-echo -n "Would you like me to get Scala for you ?? [Y/n]: "
-read resp_scala
-echo -n "Would you like me to get Spark for you ?? [Y/n]: "
-read resp_spark
-echo -n "Would you like me to get ZeroMQ for you ?? [Y/n]: "
-read resp_zeromq
-echo -n "Would you like me to get MQTT for you ?? [Y/n]: "
-read resp_mqtt
-
 echo "====================================================="
 if [ "$resp_redis" = "" ] || [ "$resp_redis" = "y" ] || [ "$resp_redis" = "yes" ]; then
     echo -n "Installing Redis...."
+    resp_redis="y"
     chroot sdcard apt-get -y install redis-server python-redis
     echo "[done]"
 else
@@ -639,6 +678,7 @@ fi
 echo "====================================================="
 if [ "$resp_scala" = "" ] || [ "$resp_scala" = "y" ] || [ "$resp_scala" = "yes" ]; then
     echo  "Installing Scala..."
+    resp_scala="y"
     wget -P sdcard $scala_url
     mkdir -p sdcard/usr/lib/scala
     chroot sdcard tar -xzf scala-2.11.6.tgz -C /usr/lib/scala
@@ -655,6 +695,7 @@ fi
 echo "====================================================="
 if [ "$resp_spark" = "" ] || [ "$resp_spark" = "y" ] || [ "$resp_spark" = "yes" ]; then
     echo -n "Installing Spark..."
+    resp_spark="y"
     chroot sdcard apt-get -y install git &>/dev/null
     wget -P sdcard $spark_url
     chroot sdcard tar xzf spark-1.6.1-bin-hadoop2.6.tgz &>/dev/null
@@ -742,6 +783,34 @@ else
     echo "====================================================="
     echo ""
 fi
+
+echo "====================================================="
+if [ "$resp_cockroach" = "" ] || [ "$resp_cockroach" = "y" ] || [ "$resp_cockroach" = "yes" ];
+then
+    echo -n "Installing cockroachdb..."
+    sudo su
+    cat <<EOF >> sdcard/root/.bashrc
+export PATH=\$PATH:/usr/local/go/bin
+export GOPATH=\$HOME/work
+EOF
+    exit
+    wget -P sdcard https://storage.googleapis.com/golang/go1.6.2.linux-armv6l.tar.gz
+    chroot sdcard << EOF
+tar xzf go1.6.2.linux-armv6l.tar.gz  -C /usr/local
+rm go1.6.2.linux-armv6l.tar.gz
+go get -d github.com/cockroachdb/cockroach
+cd \$GOPATH/src/github.com/cockroachdb/cockroach
+git checkout beta-20160505
+make build
+EOF
+    echo "[done]"
+else
+    echo "cockroachdb not installed"
+    echo "====================================================="
+    echo ""
+fi
+
+
 
 # wrap up
 
