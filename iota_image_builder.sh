@@ -698,7 +698,7 @@ if [ "$resp_spark" = "" ] || [ "$resp_spark" = "y" ] || [ "$resp_spark" = "yes" 
     resp_spark="y"
     chroot sdcard apt-get -y install git &>/dev/null
     wget -P sdcard $spark_url
-    chroot sdcard tar xzf spark-1.6.1-bin-hadoop2.6.tgz &>/dev/null
+    chroot sdcard tar xzf spark-1.6.1-bin-hadoop2.6.tgz -C /opt
     rm sdcard/spark-1.6.1-bin-hadoop2.6.tgz*
     echo "[done]"
 
