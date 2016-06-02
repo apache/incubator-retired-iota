@@ -1,0 +1,41 @@
+Basic ideas
+
+The Internet of Things consists of 'things' such as sensors, devices, machines, and intelligent edge nodes of all
+types. These things have existed at the edge since the earliest days of the Internet and have becoming increasingly
+popular in recent times. These 'things' exist in both the consumer space and the industrial application spaces.
+Let's call these 'things' points. These points are able to generate data with a volume, variety and velocity that
+surpasses anything we have seen from human input. An IOT platform is one that embraces  the diversity of these
+points at the edge and facilitating their orchestration as a coherent realtime dataflow network.
+Thus enabling action based on their collective input.
+
+Examples
+1) A large building with embedded sensors that efficiently manages the consumption of energy resources
+2) A complex machine such as a car or aircraft
+3) A home
+4) An industrial manufacturing plan
+5) A complex network of inner city traffic controllers
+
+What are the basic requirements of an IOT platform that would enable the broad vision given above? Lets begin by
+looking at the points on the edge
+
+Points
+1) Able to deal with a variety of protocols both legacy and modern (e.g. Bacnet, Modpus, IP, etc)
+2) Able to translate the data into a standard format from any protocol (e.g. id, timestamp, value)
+3) Able to deal with the velocity of real-time data on ingress and egress
+
+Computing at the Edge
+1) Able to intelligently filter data at the edge
+2) Able to intelligently transform data at the edge
+3) Able to intelligently control points on the Edge
+4) Able to operate safely when disconnected from the network (important if you are controlling expensive equipment)
+5) Able to detect errors on the Edge
+6) Able to restart failed filters, transformers and standalone processes (Observation and Supervision of edge processes)
+
+Dataflow Networks
+1) Able to create, update and delete dataflows that define a solution
+2) Able to define rules that enable decisions in dataflows
+3) Able to define actions that are called based on decision rules
+4) Able to monitor actions and rules and restart flows if any of these fail
+5) Able to define a broad class of actions that can be executed if a decision is made via set of rules
+6) Ability to run dataflow networks at different levels of the IOT "hierarchy" - in devices, in connected
+   standalone servers or in clusters.
