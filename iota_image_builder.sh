@@ -810,6 +810,21 @@ else
     echo ""
 fi
 
+echo "====================================================="
+if [ "$resp_strongswan" = "" ] || [ "$resp_strongswan" = "y" ] || [ "$resp_strongswan" = "yes" ];
+then
+    echo -n "Installing StrongSwan..."
+    chroot sdcard << EOF
+curl -L -O https://raw.github.com/philplckthun/setup-strong-strongswan/master/setup.sh
+./setup.sh
+rm setup.sh
+EOF
+    echo "[done]"
+else
+    echo "StrongSwan not installed"
+    echo "====================================================="
+    echo ""
+fi
 
 
 # wrap up

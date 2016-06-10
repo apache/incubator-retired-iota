@@ -371,7 +371,7 @@ function install_software() {
     chroot $R apt-get update
 
     printGreen "Install extra packages..."
-    chroot $R apt-get -y install htop nano avahi-utils vim git ntp openjdk-8-jdk
+    chroot $R apt-get -y install htop nano avahi-utils vim git ntp openjdk-8-jdk curl
 
     printGreen "Installing ZeroMQ..."
     chroot $R apt-get -y install libtool pkg-config build-essential autoconf automake
@@ -419,6 +419,15 @@ EOF
     cat <<EOF >> $R/etc/bash.bashrc
 export PATH=\$PATH:/opt/spark-1.6.1-bin-hadoop2.6/bin
 EOF
+
+    printGreen "Installing StrongSwan..."
+    chroot $R << EOF
+curl -L -O https://raw.github.com/philplckthun/setup-strong-strongswan/master/setup.sh
+./setup.sh
+rm setup.sh
+EOF
+
+
 
     printGreen "Install iota packages..."
 
