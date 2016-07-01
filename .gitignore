@@ -3,3 +3,5 @@
 *.swo
 .DS_Store
 
+.idea/
+incubator-iota.iml
