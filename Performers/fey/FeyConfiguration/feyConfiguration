@@ -1,0 +1,5 @@
+fey-global-configuration{
+  json-repository = "/Users/<username>/Performers/fey/FeyJSONRepo"
+  jar-repository = "/Users/<username>/Performers/fey/FeyJARRepo"
+  enable-checkpoint=false
+}

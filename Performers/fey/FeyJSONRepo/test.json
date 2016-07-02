@@ -1,0 +1,53 @@
+{
+  "guid": "OrchestrationZ",
+  "command": "CREATE",
+  "timestamp": "591997890",
+  "name": "DESCRIPTION",
+  "ensembles": [
+    {
+      "guid": "EnsembleZ",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "PUBLISHER",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey_zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {}
+          }
+        },
+        {
+          "guid": "SUBSCRIBER",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey_zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQSubscriber",
+            "parameters": {}
+          }
+        },
+        {
+          "guid": "Timestamp",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey_stream.jar",
+            "classPath": "org.apache.iota.fey.performer.Timestamp",
+            "parameters": {}
+          }
+        }
+
+      ],
+      "connections": [
+        {
+          "Timestamp": [
+            "PUBLISHER"
+          ],
+          "SUBSCRIBER": []
+        }
+      ]
+    }
+  ]
+}
