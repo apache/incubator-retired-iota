@@ -37,7 +37,7 @@ Fey is composed by Akka actors. Following is the description of each one of the 
 5. **Ensemble-ID**: A new instance of Ensemble is created under the correspondent Orchestration every time the JSON specify a new Ensemble GUID.
 6. **Performer-ID**: A new instance is created for each Performer inside the Ensemble. Each Performer belongs to an Ensemble and also has a GUID.
 
-The figure bellow shows the actor hierarchy for Fey. In this example, Fey has only two Orchestration running, in which each Orchestration has two Ensemble, and each Ensemble has its own Performers.
+The figure below shows the actor hierarchy for Fey. In this example, Fey has only two Orchestrations running, in which each Orchestration has two Ensembles, and each Ensemble has its own Performers.
 
 ![Fey actor hierarchy](./images/Fey-Actor-Tree.png)
 
@@ -47,58 +47,28 @@ Each actor path follows the following pattern:
 * **Ensemble** - `/FEY-CORE/ORCHESTRATION-GUID/ENSEMBLE-GUID/`
 * **Performer** - `/FEY-CORE/ORCHESTRATION-GUID/ENSEMBLE-GUID/PERFORMER-GUID`
 
-`Orchestrations watch its Ensembles and Ensembles watch its Performers`
+`Orchestrations manage their Ensembles and Ensembles manage their Performers`
 
-When started Fey will process all the JSON files sitting on the checkpoint directory (If enabled) and then all JSON files sitting on the JSON repository directory and then it starts monitoring for new file events.
+When started Fey processes things in the following order: 
+1. If checkpoint functionality is enabled it processes the JSON files in the checkpoint directory (see **[checkpointing](#markdown-header-fey-checkpoint)** below)
+2. It processes JSON files in the Fey JSON repository directory 
+3. Finally it starts monitoring for update and create events in the Fey JSON repository.
 
 ### Active Actors
  
 Fey offers a REST-API end point that displays all active actors. 
-This end-point only shows 4 levels of the hierarchy, which means that it shows only until the Perfomers level. 
-It also uses the _Fey-Identifier_ actor that sends an `Identity` message to the actors. Having that in mind, some actors may take longer to answer back with its identity, what can make the actor not appear on the JSON response.
+It also uses the _Fey-Identifier_ actor that sends an `Identity` message to the actors. 
+Having said that, some actors may take longer to answer back with their identity than others.
+This can make it seem like those actor are not active becuase they are not present in the response.
 
-The REST-API binds to `localhost` listening to the port `16666`, and the end point should be called like:
+The REST-API binds to `localhost` listening to the port `16666`, and the end point should be called with:
  
  ``` http://localhost:16666/fey/activeactors ```
  
- Bellow is a sample JSON response:
+ Below is a sample of what you might see:
  
-```json
-{ 
-     "total": 6,
-     "name": "FeyCore",
-     "children": [
-         {
-             "name": "MYORCHESTRATION01",
-             "children": [
-                 {
-                     "name": "ENSEMBLE01",
-                     "children": [
-                       {
-                          "name": "ZMQ",
-                          "children": []
-                       },
-                       {
-                          "name": "REDIS",
-                          "children": []
-                       }
-                     ]
-                 }
-             ]
-         },
-         {
-             "name": "DIR_WATCHER",
-             "children": []
-         },
-         {
-             "name": "FEY_IDENTIFIER",
-             "children": []
-         }
-     ]
- }
-```
-
-
+ ![Fey actor hierarchy](./images/Fey-Active-Actors.png)
+ 
 ## Running Fey
 
 You can specify one argument in order to run Fey:
@@ -109,29 +79,30 @@ You just need to execute Fey _.jar_:
 	
 ```java -jar fey.jar FEY_CONFIG_FILE```
 	
-Fey will process all the JSON files sitting on the directory and then start monitoring for file events.
-**Obs**: If checkpoint is enabled, then all files sitting on the checkpoint directory will be processed before the ones sitting on the JSON directory.
+Fey will process all the JSON files in JSON directory specified in the configuration file and then it will start monitoring that directory for file events.
+**Note**: If checkpointing is enabled, then all files in the checkpoint directory will be processed before the ones in the JSON directory.
 
 ### Fey Configuration
 
-The Fey configuration file should contain any of the following properties:
+The Fey configuration file can optionally include one of more of the following properties:
 
 | Property                    | Type                 | Description   | Default|
 | :---------------------- | :------------------- | :------------ | :------------ |
-| **enable-checkpoint** | Boolean | Keeps track of the latest Orchestrations running so in case of Fey stops, it will restart back from the checkpoint. When it is enables fey will add `.processed` to all processed files and start all Orchestration sitting on the checkpoint dir. If it is disabled then no checkpoint will be created. | true
+| **enable-checkpoint** | Boolean | Keeps track of the latest Orchestrations running in case Fey stops, it will restart Fey from the checkpoint. When checkpointing is enabled fey will add `.processed` to all processed files and start all Orchestrations in the checkpoint dir. If checkpointing is disabled then no checkpoint will be created. | true
 | **checkpoint-directory** | String | Path where Fey should keep the checkpoint files | /tmp/fey/checkpoint |
 | **json-repository** | String | Path that will be monitored by Fey in order to get the JSON files | ~/feyJSONRepo |
 | **json-extension** | String | Extension of the files that should be processed by Fey | .json |
 | **jar-repository** | String | Path where Fey should look for the GenericActor jars to be loaded from | ~/feyJarRepo |
 | **log-level** | String | Log level for Fey | DEBUG|
-| **log-appender**| String | Enables or disable the appender based on the user configuration. Accepts 3 options: FILE or STDOUT or FILE_STDOUT | STDOUT |
+| **log-appender**| String | Enable or disable the appender based on user configuration. Accepts 3 options: FILE or STDOUT or FILE_STDOUT | STDOUT |
 
 ### Fey Logging
 
-Fey uses _logback.xml_ to configure its logs. By Default, Fey saves its logs to a log file located at `${HOME}/.fey/logs/`.
+Fey uses _logback.xml_ to configure its logs. By Default, Fey appends the to STOUT. You can change the configuration to log a file or you could log to both. 
+If you ssave the log to a file the default location would be at `${HOME}/.fey/logs/`.
 Fey uses a Rolling File Appender where each log file has a max size of one megabyte (1MB) and it keeps 30 log files at maximum.
 
-Right now the log level is `INFO` for the entire system, and the only configuration offer by Fey is the log level of Akka Actors.
+In Fey the default log level is `DEBUG` for the entire system, and the other configuration offered by Fey are log level .
 
 ## JSON Configuration
 
@@ -208,7 +179,8 @@ An object inside the Connections property obeys the following pattern:
 
 ### Sample JSON
 
-This JSON specifies an Orchestration that has only one Ensemble. The Ensemble defines the Redis and ZMQ _.jar_ and then map the Redis to ZMQ.
+This JSON specifies an Orchestration that has only one Ensemble. The Ensemble defines the Redis and ZMQ _.jar_ and then maps the Redis Permer's output messages to
+to the ZMQ Performer.
 
 ```json
 {  
@@ -264,19 +236,22 @@ This JSON specifies an Orchestration that has only one Ensemble. The Ensemble de
 ```
 ## Fey Checkpoint
 
-Fey will keep track of the latest version of each Orchestration running. This can be disable through the configuration file.
-When checkpoint is enabled, Fey will process the files in the JSON directory and add to them an extension: 
+Fey will keep track of the latest version of each Orchestration running. This can be disabled through the configuration file.
+When checkpoint is enabled, Fey will process the files in the JSON directory and for each it will add a file extension
+that refects its status:
 
 1. `.processed`: Means that the file had the correct JSON schema and was able to be processed by Fey.
 2. `.failed`: Means that something was wrong in the JSON and it could not be parsed by Fey.
 
-All running Orchestration will be stored in order to be used in the future when Fey system restarts, which means that Fey will load all Orchestrations sitting on the checkpoint directory prior to the ones sitting on the JSON directory.
+All running Orchestration have their JSON file stored in the checkpoint directory.  If the Fey system restarts, 
+Fey will restart all Orchestrations in the checkpoint directory prior to starting new ones that have appeared in the JSON directory.
 
-If checkpoint is not enabled no extension will be added to the JSON files and no checkpoint will be kept.
+If checkpoint is not enabled no extension will be added to the JSON files and no checkpoint will be kept. This option is useful for the developers of Fey performers when in
+development mode.
 
-## Writing Fey Generic Actor
+## Developing New Performers 
 
-All actors (called **Performers** in Fey) loaded by Fey `must be` an extension of the `FeyGenericActor` abstract class. In order to create your own _Fey Generic Actor_ you will need to add fey as a `provided` library to your project and create a new class that extends from _FeyGenericActor_.
+All actors (called **Performers** in Fey) used by Fey `must be` an extension of the `FeyGenericActor` abstract class. In order to create your own _Fey Generic Actor_ you will need to add fey as a `provided` library to your project and create a new class that extends from _FeyGenericActor_.
 
 ###Constructor
 
@@ -310,9 +285,9 @@ class MyGenericActor(override val params: Map[String, String] = Map.empty,
 
 ### Life-cycle Actor Hooks
 
-Fey's generic actor final overrides the life-cycle actor hooks, such as: `preStart`, `postStop`, `preRestart`, `postRestart`. But, it does offers to the user the possibility of executing any additional commands by overriding the following methods:
+Fey's generic actor final overrides the life-cycle actor hooks, such as: `preStart`, `postStop`, `preRestart`, `postRestart`. But, it does offers the user the ability to execute additional commands by overriding the following methods:
 
-* **onStart**: Will be called as part of the actor's life-cycle `preStart`, right after make the decision of starting a scheduler or not (see **[Scheduler](#markdown-header-scheduler)** for more details). Be carefull when using this method for a load balanced agent, since it will be called for every routee. So, if you are binding to some port inside this method, for example, be aware that the other routees may not be able to bind to the same port again. (See **[Load Balancing](#markdown-header-load-balancing)** for more details)
+* **onStart**: Will be called as part of the actor's life-cycle `preStart`, right after make the decision of starting a scheduler or not (see **[Scheduler](#markdown-header-scheduler)** for more details). Be careful when using this method for an autoscaling Performer, since it will be called for every routee (Akka terminology). So, if you are doing something like binding to a port in the OnStart method of the Performer, other routees may not be able to bind to the same port again. (See **[Auto Scaling](#markdown-header-auto-scaling)** for more details)
 * **onStop**: Will be called as part of the actor's life-cycle `postStop`, after stopping the scheduler. Normally, this method is used to "clean-up" the actor, like closing connections.
 * **onRestart**: Will be called as part of the actor's life-cycle `postRestart`. When the actor is restarted, all of its children will be stopped and the `postStop` is going to be called, followed by calling `preStart`
 
@@ -360,26 +335,26 @@ override def processMessage[T](message:T, sender: ActorRef): Unit = {
 
 ####Handling Backoff
 
-A lot of use cases will require the actor to stop processing messages for a time interval after some specific action happend. The generic actor offers a built-in backoff that is used only by the `PROCESS` message.
+A lot of use cases will require the Performer (actor) stop processing messages for a time interval after some specific action happend. The generic actor offers a built-in backoff that is used only by the `PROCESS` message.
 
 Every time you need the actor to backoff after an action, you should call the `startBackoff` method.
 The `startBackoff` method uses the constructor parameter **[backoff](#markdown-header-constructor)** and sets an internal state of the actor called `endBackoff` with the time in which the actor should starting processing messages again.
-The `endBackoff` internal state is verifyed everytime the actor gets a **[PROCESS](#markdown-header-processing-messages)** message.
+The `endBackoff` internal state is verified everytime the actor gets a **[PROCESS](#markdown-header-processing-messages)** message.
 
-`Obs: Be careful when calling startBackoff. Make sure it will just be affected by the flow around the PROCESS message`
+`Note: Be careful when calling startBackoff. Make sure it will just be affected by the flow around the PROCESS message`
 
 
 ###Scheduler
 
-The generic actor is able to start and control one scheduler. The scheduler will be started through the `preStart` life-cycle hook that will check if the constructor parameter **[schedulerTimeInterval](#markdown-header-constructor)** is different of zero and then start a `system.scheduler` that executes every **[schedulerTimeInterval](#markdown-header-constructor)**. If the parameter is zero no scheduler will be started.
+The generic actor is able to start and control one scheduler. The scheduler will be started through the `preStart` life-cycle hook that will check if the constructor parameter **[schedulerTimeInterval](#markdown-header-constructor)** is non-zero then Fey starts a `system.scheduler` that executes every **[schedulerTimeInterval](#markdown-header-constructor)**. If the parameter is zero no scheduler will be started.
 
-Once started, the scheduler will call the user-overridable `execute()` method every schedulerTimeInterval. When the actor dies or get restarted, the scheduler will be cancelled and then started again (in case of restart).
+Once started, the scheduler will call the user-overridable `execute()` method every schedulerTimeInterval. If the actor dies or get restarted, the scheduler will be cancelled and then started again (in case of restart).
 
-`Obs: You can start as many schedulers as you want to inside your generic actor, but just the one started during the creation of the actor by Fey will be monitored, i.e., will be stopped and started as necessary.`
+`Note: You can start as many schedulers as you want to inside your generic actor, but just the one started during the creation of the actor by Fey will be monitored, i.e., will be stopped and started as necessary.`
 
-### Load Balancing
+### Auto Scaling
 
-Fey implements [Akka](http://akka.io/) Load Balacing functionality using [Router Actors](http://doc.akka.io/docs/akka/snapshot/scala/routing.html) with **SmallestMailboxPool** strategy and with **DefaultResizer**. When starting the actor, Fey looks to the JSON configuration and check if the Performer should be a load balanced Performer. For more information about Routers, please visit Akka's webpage.
+Fey implements [Akka](http://akka.io/) Load Balacing functionality (we call this Autoscaling) using [Router Actors](http://doc.akka.io/docs/akka/snapshot/scala/routing.html) with **SmallestMailboxPool** strategy and with **DefaultResizer**. When starting the actor, Fey looks to the JSON configuration and checks if the Performer should is an auto scaled Performer. For more information about Routers, please visit Akka's webpage.
  
 ### Example of a Fey Generic Actor
 
