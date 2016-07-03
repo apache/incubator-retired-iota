@@ -103,7 +103,7 @@ object JarsBuild extends Build {
   lazy val parent = Project(
     id = "jars_parent",
     base = file("."),
-    aggregate = Seq(Stream, CherryRP, ZMQ, Kafka, MQTT, Fey),
+    aggregate = Seq(Stream, ZMQ, Fey),
     settings = rootbuildSettings ++ Seq(
       aggregate in update := false
     )
