@@ -24,7 +24,7 @@ object ModuleDependencies {
 
   val FeyDependencies = provided(akka_actor, fey)
   val StreamDependencies = provided(akka_actor, fey)
-  val ZMQDependecies = provided(akka_actor, zmq, fey)
+  val ZMQDependecies = provided(akka_actor,  fey) ++ compile(zmq)
 }
 
 object PerformersBuild extends Build {
