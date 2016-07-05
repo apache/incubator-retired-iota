@@ -18,7 +18,7 @@ object BuildSettings {
     name := ParentProject,
     version := Version,
     scalaVersion := ScalaVersion,
-    organization := "com.libit",
+    organization := "org.apache.iota",
     description := "Fey External Jars Project",
     scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint")
   )

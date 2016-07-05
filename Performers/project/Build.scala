@@ -22,7 +22,6 @@ object ModuleDependencies {
 
   import Dependencies._
 
-  val FeyDependencies = provided(akka_actor, fey)
   val StreamDependencies = provided(akka_actor, fey)
   val ZMQDependecies = provided(akka_actor,  fey) ++ compile(zmq)
 }
@@ -34,26 +33,17 @@ object PerformersBuild extends Build {
   lazy val parent = Project(
     id = "jars_parent",
     base = file("."),
-    aggregate = Seq(Stream, ZMQ, Fey),
+    aggregate = Seq(Stream, ZMQ),
     settings = rootbuildSettings ++ Seq(
       aggregate in update := false
     )
   )
 
-  lazy val fey = Project(
-    id = "fey",
-    base = file("./fey"),
-    settings = BasicSettings ++ FeybuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.FeyDependencies,
-      mainClass := Some("org.apache.iota.fey.Application")
-    ))
-
   lazy val stream = Project(
     id = "fey_stream",
     base = file("./stream"),
     settings = BasicSettings ++ StreambuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.StreamDependencies,
-      mainClass := Some("org.apache.iota.fey.performer.stream.Application")
+      libraryDependencies ++= ModuleDependencies.StreamDependencies
 
     ))
 
@@ -61,8 +51,7 @@ object PerformersBuild extends Build {
     id = "fey_zmq",
     base = file("./zmq"),
     settings = BasicSettings ++ ZMQbuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.ZMQDependecies,
-      mainClass := Some("org.apache.iota.fey.performer.zmq.Application")
+      libraryDependencies ++= ModuleDependencies.ZMQDependecies
     ))
 
 }
