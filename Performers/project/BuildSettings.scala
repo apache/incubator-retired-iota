@@ -6,7 +6,6 @@ object BuildSettings {
   import Dependencies.Resolvers._
 
   val ParentProject = "jars_parent"
-  val Fey = "fey"
   val Stream = "fey_stream"
   val ZMQ = "fey_zmq"
 
@@ -24,6 +23,7 @@ object BuildSettings {
   )
 
   lazy val BasicSettings = Seq(
+    organization := "org.apache.iota",
     maxErrors := 5,
     ivyScala := ivyScala.value map {
       _.copy(overrideScalaVersion = true)
@@ -34,20 +34,10 @@ object BuildSettings {
     connectInput in run := true
   )
 
-  lazy val FeybuildSettings = Defaults.coreDefaultSettings ++ Seq(
-    name := Fey,
-    version := Version,
-    scalaVersion := ScalaVersion,
-    organization := "com.litbit",
-    description := "Fey Development Instance",
-    scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint")
-  )
-
   lazy val StreambuildSettings = Defaults.coreDefaultSettings ++ Seq(
     name := Stream,
     version := Version,
     scalaVersion := ScalaVersion,
-    organization := "org.apache.iota.fey.performer",
     description := "Simple Stream Application",
     scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
     mainClass := Some("org.apache.iota.fey.performer.Application")
@@ -57,7 +47,6 @@ object BuildSettings {
     name := ZMQ,
     version := Version,
     scalaVersion := ScalaVersion,
-    organization := "org.apache.iota.fey.performer",
     description := "ZMQ Application",
     scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
     mainClass := Some("org.apache.iota.fey.performer.Application")
