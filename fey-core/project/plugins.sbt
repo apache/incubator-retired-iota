@@ -20,3 +20,4 @@ logLevel := Level.Warn
 addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "0.13.0")
 addSbtPlugin("io.spray" % "sbt-revolver" % "0.7.2")
 addSbtPlugin("com.frugalmechanic" % "fm-sbt-s3-resolver" % "0.9.0")
+addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.5.3")

@@ -17,6 +17,7 @@
 
 import sbt._
 import sbt.Keys._
+import sbtassembly.AssemblyPlugin.autoImport._
 
 object BuildSettings {
 
@@ -135,6 +136,7 @@ object JarsBuild extends Build {
         _.copy(overrideScalaVersion = true)
       },
       triggeredMessage := Watched.clearWhenTriggered,
+      assemblyJarName in assembly := "fey_stream.jar",
       resolvers := allResolvers,
       libraryDependencies ++= Dependencies.StreamDependencies,
       mainClass := Some("org.apache.iota.fey.performer.stream.Application"),
@@ -151,6 +153,7 @@ object JarsBuild extends Build {
         _.copy(overrideScalaVersion = true)
       },
       triggeredMessage := Watched.clearWhenTriggered,
+      assemblyJarName in assembly := "fey_zmq.jar",
       resolvers := allResolvers,
       libraryDependencies ++= Dependencies.ZMQDependecies,
       mainClass := Some("org.apache.iota.fey.performer.zmq.Application"),
