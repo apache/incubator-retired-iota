@@ -30,7 +30,6 @@ object BuildSettings {
     },
     triggeredMessage := Watched.clearWhenTriggered,
     resolvers := allResolvers,
-    mainClass := Some("org.apache.iota.fey.Application"),
     fork := true,
     connectInput in run := true
   )
@@ -50,7 +49,8 @@ object BuildSettings {
     scalaVersion := ScalaVersion,
     organization := "org.apache.iota.fey.performer",
     description := "Simple Stream Application",
-    scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint")
+    scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
+    mainClass := Some("org.apache.iota.fey.performer.Application")
   )
 
   lazy val ZMQbuildSettings = Defaults.coreDefaultSettings ++ Seq(
@@ -59,7 +59,8 @@ object BuildSettings {
     scalaVersion := ScalaVersion,
     organization := "org.apache.iota.fey.performer",
     description := "ZMQ Application",
-    scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint")
+    scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
+    mainClass := Some("org.apache.iota.fey.performer.Application")
   )
 
 }
