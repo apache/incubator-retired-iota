@@ -1,8 +1,8 @@
 {
-  "guid": "MAESTRO-3",
-  "command": "RECREATE",
-  "timestamp": "7919767890",
-  "name": "DESCRIPTION",
+  "guid": "RaspberryPi",
+  "command": "CREATE",
+  "timestamp": "1467731017",
+  "name": "RaspberryPi",
   "ensembles": [
     {
       "guid": "TEMPERATURE",
