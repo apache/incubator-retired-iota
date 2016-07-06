@@ -17,12 +17,8 @@
 
 package org.apache.iota.fey
 
-import akka.actor.{ActorSystem, Props}
-import akka.io.IO
-import akka.pattern.ask
+import akka.actor.ActorSystem
 import akka.util.Timeout
-import com.typesafe.config.ConfigFactory
-import spray.can.Http
 
 import scala.concurrent.duration._
 
@@ -33,10 +29,9 @@ object Application extends App {
   implicit val system = ActorSystem("FEY-MANAGEMENT-SYSTEM")
 
   val fey = system.actorOf(FeyCore.props, name = "FEY-CORE")
-
-  val service = system.actorOf(Props[MyServiceActor], name = "FEY_REST_API")
+  //Starting the REST-server
+  FeyActorUIService
 
   implicit val timeout = Timeout(800.seconds)
-  IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 16666)
 
 }

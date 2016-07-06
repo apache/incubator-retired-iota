@@ -15,6 +15,7 @@
   *
   */
 
+import _root_.sbtassembly.AssemblyPlugin.autoImport._
 import sbt._
 import sbt.Keys._
 
@@ -43,15 +44,17 @@ object PerformersBuild extends Build {
     id = "fey_stream",
     base = file("./stream"),
     settings = BasicSettings ++ StreambuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.StreamDependencies
+      libraryDependencies ++= ModuleDependencies.StreamDependencies ,
+      assemblyJarName in assembly := "fey_stream.jar"
 
     ))
 
-   lazy val zmq = Project(
+  lazy val zmq = Project(
     id = "fey_zmq",
     base = file("./zmq"),
     settings = BasicSettings ++ ZMQbuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.ZMQDependecies
+      libraryDependencies ++= ModuleDependencies.ZMQDependecies,
+      assemblyJarName in assembly := "fey_zmq.jar"
     ))
 
 }

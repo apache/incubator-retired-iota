@@ -38,37 +38,38 @@ object Resolvers {
   val sonatype = "Sonatype Release" at "https://oss.sonatype.org/content/repositories/releases"
   val mvnrepository = "MVN Repo" at "http://mvnrepository.com/artifact"
   val emuller = "emueller-bintray" at "http://dl.bintray.com/emueller/maven"
-
-  val allResolvers = Seq(typesafe, sonatype, mvnrepository, emuller)
+  val typeSafeMavenResolvers = "Typesafe repository" at "https://repo.typesafe.com/typesafe/maven-releases/"
+  val allResolvers = Seq(typesafe, sonatype, mvnrepository, emuller, typeSafeMavenResolvers)
 
 }
 
 object Dependency {
 
-  val akka_actor      = "com.typesafe.akka"   %%  "akka-actor"    % "2.4.2"
-  val typesafe_config = "com.typesafe"        % "config"          % "1.3.0"
+  val akka_actor = "com.typesafe.akka" %% "akka-actor" % "2.4.2"
+  val typesafe_config = "com.typesafe" % "config" % "1.3.0"
 
-  val playJson        = "com.typesafe.play"   %% "play-json"      % "2.5.3"
-  val jsonValidator   = "com.eclipsesource" %% "play-json-schema-validator" % "0.7.0"
+  val playJson = "com.typesafe.play" %% "play-json" % "2.5.3"
+  val jsonValidator = "com.eclipsesource" %% "play-json-schema-validator" % "0.7.0"
 
   //Logger
-  val slf4j          = "com.typesafe.akka" %% "akka-slf4j" % "2.4.2"
-  val log4jbind      = "ch.qos.logback" % "logback-classic" % "1.1.7"
-  val javaFilter     =  "janino" % "janino" % "2.5.10"
+  val slf4j = "com.typesafe.akka" %% "akka-slf4j" % "2.4.2"
+  val log4jbind = "ch.qos.logback" % "logback-classic" % "1.1.7"
+  val javaFilter = "janino" % "janino" % "2.5.10"
 
   //restapi
-  val sprayCan       = "io.spray"          %%  "spray-can"      % "1.3.3"
-  val sprayRouting   = "io.spray"          %%  "spray-routing"  % "1.3.3"
+  val playNetty = "com.typesafe.play" %% "play-netty-server" % "2.5.3"
 
 }
 
 object Dependencies {
+
   import Dependency._
 
-  val iota_dep_conn = Seq(akka_actor,typesafe_config,playJson,slf4j,log4jbind,sprayCan,sprayRouting,jsonValidator,javaFilter)
+  val iota_dep_conn = Seq(akka_actor, typesafe_config, playJson, slf4j, log4jbind, playNetty, jsonValidator, javaFilter)
 }
 
-object IotaBuild extends Build{
+object IotaBuild extends Build {
+
   import Resolvers._
   import Dependencies._
   import Settings._
@@ -78,7 +79,9 @@ object IotaBuild extends Build{
     base = file("."),
     settings = iota_connectors ++ Seq(
       maxErrors := 5,
-      ivyScala := ivyScala.value map { _.copy(overrideScalaVersion = true) },
+      ivyScala := ivyScala.value map {
+        _.copy(overrideScalaVersion = true)
+      },
       triggeredMessage := Watched.clearWhenTriggered,
       resolvers := allResolvers,
       libraryDependencies ++= iota_dep_conn,
@@ -91,12 +94,12 @@ object IotaBuild extends Build{
         if (isSnapshot.value)
           Some("snapshots" at nexus + "snapshots")
         else
-          Some("releases"  at nexus + "releases")
+          Some("releases" at nexus + "releases")
       },
       publishMavenStyle := true,
       conflictManager := ConflictManager.all,
       assemblyMergeStrategy in assembly := {
-        case PathList("org", "slf4j", xs @ _*)         => MergeStrategy.last
+        case PathList("org", "slf4j", xs@_*) => MergeStrategy.last
         case x =>
           val oldStrategy = (assemblyMergeStrategy in assembly).value
           oldStrategy(x)
