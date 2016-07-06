@@ -175,6 +175,7 @@ object JSON_PATH{
   val ORCHESTRATION_NAME = "name"
   val ORCHESTRATION_TIMESTAMP = "timestamp"
   val PERFORMER_AUTO_SCALE = "autoScale"
+  val CONTROL_AWARE = "controlAware"
 }
 
 object CONFIG{
@@ -183,6 +184,7 @@ object CONFIG{
 
   val FILE_APPENDER = "FEY-FILE"
   val CONSOLE_APPENDER = "FEY-CONSOLE"
+  val CONTROL_AWARE_MAILBOX = "akka.fey-dispatchers.control-aware-dispatcher"
 
   var CHECKPOINT_DIR = ""
   var JSON_REPOSITORY = ""

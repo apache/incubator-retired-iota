@@ -158,20 +158,17 @@ protected class Ensemble(val orchestrationID: String,
           createFeyActor(connID, connectors.getOrElse(connID,Array.empty),tmpActors)
         }).toMap
 
-        val clazz = loadClazzFromJar(performerInfo.classPath, performerInfo.jarName)
 
         var actor:ActorRef = null
+        val actorProps = getPerformer(performerInfo, connections)
         if(performerInfo.autoScale > 0) {
           val resizer = DefaultResizer(lowerBound = 1, upperBound = performerInfo.autoScale, messagesPerResize = 200, backoffThreshold = 0.4)
           val smallestMailBox = SmallestMailboxPool(1, Some(resizer))
-          actor = context.actorOf(
-            smallestMailBox.props(Props(clazz,
-              performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, true)),
-            name = performerID)
+
+          actor = context.actorOf(smallestMailBox.props(actorProps), name = performerID)
+
         }else{
-          actor = context.actorOf(Props(clazz, performerInfo.parameters,
-            performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, false),
-            name = performerID)
+          actor = context.actorOf(actorProps, name = performerID)
         }
 
         context.watch(actor)
@@ -183,6 +180,29 @@ protected class Ensemble(val orchestrationID: String,
     }else{
       (performerID, tmpActors.get(performerID).get)
     }
+  }
+
+  /**
+    * Creates actor props based on JSON configuration
+    * @param performerInfo Performer object
+    * @param connections connections
+    * @return Props of actor based on JSON config
+    */
+  private def getPerformer(performerInfo: Performer, connections: Map[String, ActorRef]): Props = {
+
+    val clazz = loadClazzFromJar(performerInfo.classPath, performerInfo.jarName)
+
+    val autoScale = if(performerInfo.autoScale > 0) true else false
+
+    val actorProps = Props(clazz,
+      performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, autoScale)
+
+    if(performerInfo.controlAware){
+      actorProps.withDispatcher(CONFIG.CONTROL_AWARE_MAILBOX)
+    }else{
+      actorProps
+    }
+
   }
 
   /**
@@ -248,7 +268,8 @@ object Ensemble {
       val jarName: String = (performer \ SOURCE \ SOURCE_NAME).as[String]
       val classPath: String = (performer \ SOURCE \ SOURCE_CLASSPATH).as[String]
       val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
-      (id, new Performer(id, jarName, classPath,params,schedule.millisecond,backoff.millisecond, autoScale))
+      val controlAware:Boolean = if (performer.keys.contains(CONTROL_AWARE)) (performer \ CONTROL_AWARE).as[Boolean] else false
+      (id, new Performer(id, jarName, classPath,params,schedule.millisecond,backoff.millisecond, autoScale,controlAware))
     }).toMap
   }
 
@@ -284,4 +305,4 @@ object Ensemble {
 case class Performer(uid: String, jarName: String,
                 classPath: String, parameters: Map[String,String],
                 schedule: FiniteDuration, backoff: FiniteDuration,
-                autoScale: Int)
+                autoScale: Int, controlAware: Boolean)

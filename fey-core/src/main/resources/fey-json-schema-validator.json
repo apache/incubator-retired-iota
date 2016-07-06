@@ -29,6 +29,9 @@
           "guid":{
             "type":"string"
           },
+          "controlAware":{
+            "type":"boolean"
+          },
           "autoScale":{
             "type":"integer",
             "minimum":0
