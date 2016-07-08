@@ -18,7 +18,7 @@
 package org.apache.iota.fey
 
 import akka.actor.{Actor, ActorIdentity, ActorLogging, ActorPath, Identify}
-import akka.routing.{GetRoutees, Routees}
+import akka.routing.{ActorRefRoutee, GetRoutees, Routees}
 import play.api.libs.json._
 
 import scala.collection.mutable.HashSet
@@ -26,8 +26,6 @@ import scala.collection.mutable.HashSet
 protected class IdentifyFeyActors extends Actor with ActorLogging {
 
   import IdentifyFeyActors._
-
-  val toStringRouteePrefix = "ActorRefRoutee(Actor["
 
   def receive = {
     case IDENTIFY_TREE(startPath) =>
@@ -47,10 +45,12 @@ protected class IdentifyFeyActors extends Actor with ActorLogging {
       self ! ref.path
 
     case routees:Routees =>
-      routees.routees.foreach(routee => {
-        val pathTmp = routee.toString.replace(toStringRouteePrefix,"")
-        actorsPath.add(pathTmp.substring(0, pathTmp.indexOf("#")))
-      })
+      routees.routees
+        .map(_.asInstanceOf[ActorRefRoutee])
+        .foreach(routee => {
+          log.info(routee.ref.path.toString)
+          actorsPath.add(routee.ref.path.toString)
+        })
 
     case _ =>
   }
