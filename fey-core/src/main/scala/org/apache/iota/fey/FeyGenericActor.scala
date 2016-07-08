@@ -18,6 +18,8 @@
 package org.apache.iota.fey
 
 import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable}
+import akka.routing.GetRoutees
+
 import scala.concurrent.duration._
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -64,6 +66,9 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
       }
     // In case
     case EXCEPTION(reason) => throw reason
+
+    case GetRoutees => //Discard
+
     //Not treated messages will be pass over to the receiveComplement
     case x => customReceive(x)
   }

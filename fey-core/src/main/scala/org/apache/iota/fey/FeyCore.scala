@@ -26,6 +26,7 @@ import Utils._
 import akka.actor.SupervisorStrategy._
 import play.api.libs.json._
 import JSON_PATH._
+import akka.routing.GetRoutees
 import org.apache.iota.fey.Orchestration.{CREATE_ENSEMBLES, DELETE_ENSEMBLES, UPDATE_ENSEMBLES}
 import com.eclipsesource.schema._
 
@@ -86,6 +87,8 @@ protected class FeyCore extends Actor with ActorLogging{
             checkForOrchestrationWaitingForTermination(guid)
           }
       }
+
+    case GetRoutees => //Discard
 
     case x =>
       log.info(s"Received $x")

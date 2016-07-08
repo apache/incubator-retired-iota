@@ -95,7 +95,7 @@ The Fey configuration file can optionally include one of more of the following p
 | **jar-repository** | String | Path where Fey should look for the GenericActor jars to be loaded from | ~/feyJarRepo |
 | **log-level** | String | Log level for Fey | DEBUG|
 | **log-appender**| String | Enable or disable the appender based on user configuration. Accepts 3 options: FILE or STDOUT or FILE_STDOUT | STDOUT |
-
+| **auto-scale.messages-per-resize** | Integer | Affects only Performers that are able to auto scale. Defines the volume of message that will trigger a resize | 500 |
 ### Fey Logging
 
 Fey uses _logback.xml_ to configure its logs. By Default, Fey appends the to STOUT. You can change the configuration to log a file or you could log to both. 

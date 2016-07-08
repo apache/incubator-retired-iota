@@ -19,6 +19,7 @@ package org.apache.iota.fey
 
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props, Terminated}
+import akka.routing.GetRoutees
 import org.apache.iota.fey.FeyCore.STOP_EMPTY_ORCHESTRATION
 import play.api.libs.json._
 
@@ -54,6 +55,8 @@ protected class Orchestration(val name: String,
       ensembles.remove(actor.path.name)
       checkForEnsemblesWaitingTermination(actor.path.name)
       stopIfNoOrchestrationisRunning()
+
+    case GetRoutees => //Discard
 
     case x => log.warning(s"Message $x not treated by Orchestrations")
   }
