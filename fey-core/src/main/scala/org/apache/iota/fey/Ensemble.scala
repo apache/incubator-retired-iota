@@ -19,7 +19,7 @@ package org.apache.iota.fey
 
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props, Terminated}
-import akka.routing.{DefaultResizer, SmallestMailboxPool}
+import akka.routing.{ActorRefRoutee, DefaultResizer, GetRoutees, SmallestMailboxPool}
 import org.apache.iota.fey.JSON_PATH._
 import play.api.libs.json.JsObject
 
@@ -56,6 +56,8 @@ protected class Ensemble(val orchestrationID: String,
         context.stop(child)
       }
       throw new RestartEnsemble(s"DEAD Performer ${actor.path.name}")
+
+    case GetRoutees => //Discard
 
     case x => log.warning(s"Message $x not treated by Ensemble")
   }
