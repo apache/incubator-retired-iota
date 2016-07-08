@@ -18,83 +18,47 @@
 
 <configuration>
 
+    <property name="LOG_HOME" value="${HOME}/.fey/logs" />
+
     <appender name="FEY-CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
         <encoder>
             <charset>UTF-8</charset>
-            <pattern>[%p] [%d{yy/MM/dd HH:mm:ss}] %c [%X{akkaSource}]: %msg%n</pattern>
+            <pattern>[%p] [%d{yy/MM/dd HH:mm:ss}] %c [%X{akkaSource}] : %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- Fey core -->
-    <appender name="FEY-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <append>true</append>
-        <file>${HOME}/.fey/logs/fey_core.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <!-- daily rollover. Make sure the path matches the one in the file element or else
-             the rollover logs are placed in the working directory. -->
-            <fileNamePattern>${HOME}/.fey/logs/fey_core-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>1MB</maxFileSize>
-            <maxHistory>30</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
+    <appender name="FEY-FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
 
-       <!-- <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-            <evaluator>
-                <expression>
-                    if(logger.startsWith("com.apache.iota.fey.FeyCore"))
-                        return true;
-                    return false;
-                </expression>
-            </evaluator>
-            <OnMismatch>DENY</OnMismatch>
-            <OnMatch>NEUTRAL</OnMatch>
-        </filter> -->
+        <!-- MDC value -->
+        <discriminator>
+            <key>fileName</key>
+            <defaultValue>fey_core</defaultValue>
+        </discriminator>
 
-        <encoder>
-            <charset>UTF-8</charset>
-            <pattern>[%p] [%d{yy/MM/dd HH:mm:ss}] %c [%X{akkaSource}]: %msg%n</pattern>
-        </encoder>
+        <sift>
+            <!-- Fey core -->
+            <appender name="FEY-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+                <append>true</append>
+                <file>${LOG_HOME}/${fileName}.log</file>
+                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+                    <!-- daily rollover. Make sure the path matches the one in the file element or else
+                     the rollover logs are placed in the working directory. -->
+                    <fileNamePattern>${LOG_HOME}/${fileName}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+                    <maxFileSize>1MB</maxFileSize>
+                    <maxHistory>30</maxHistory>
+                    <totalSizeCap>1GB</totalSizeCap>
+                </rollingPolicy>
+
+                <encoder>
+                    <charset>UTF-8</charset>
+                    <pattern>[%p] [%d{yy/MM/dd HH:mm:ss}] %c [%X{akkaSource}] : %msg%n</pattern>
+                </encoder>
+            </appender>
+
+        </sift>
+
     </appender>
-
-    <!-- Orchestrations core -->
-    <!-- <appender name="FILE-ORHC" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <append>true</append>
-        <file>logs/fey_orchestrations.log</file>
-        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-            <fileNamePattern>logs/fey_orchestrations-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-            <maxFileSize>100KB</maxFileSize>
-            <maxHistory>60</maxHistory>
-            <totalSizeCap>1GB</totalSizeCap>
-        </rollingPolicy>
-
-        <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-            <evaluator>
-                <expression>
-                    if(logger.startsWith("com.apache.iota.fey.Orchestration"))
-                    return true;
-                    return false;
-                </expression>
-            </evaluator>
-            <OnMismatch>DENY</OnMismatch>
-            <OnMatch>NEUTRAL</OnMatch>
-        </filter>
-
-        <encoder>
-            <charset>UTF-8</charset>
-            <pattern>[%p] [%d{yy/MM/dd HH:mm:ss}] [%X{akkaSource}]: %msg%n</pattern>
-        </encoder>
-    </appender> -->
-
-    <!-- Logging asynchronously -->
-    <!-- <appender name="ASYNC" class="ch.qos.logback.classic.AsyncAppender">
-        <queueSize>1000</queueSize>
-        <appender-ref ref="FILE" />
-    </appender> -->
-
-    <!--
-    <logger name="com.apache.iota.fey" level="INFO" appender="FILE-FEY-CORE"/>
-    <logger name="com.apache.iota.fey.Orchestration" level="INFO" appender="FILE-ORHC"/> -->
 
     <root level="INFO">
         <appender-ref ref="FEY-FILE"/>

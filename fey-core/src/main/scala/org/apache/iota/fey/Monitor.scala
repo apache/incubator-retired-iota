@@ -17,33 +17,50 @@
 
 package org.apache.iota.fey
 
-import akka.actor.{Actor, ActorLogging}
+import akka.actor.Actor
+import akka.event.{DiagnosticLoggingAdapter, Logging}
 
 /**
   * Created by barbaragomes on 7/8/16.
   */
-protected class Monitor extends Actor with ActorLogging{
+protected class Monitor extends Actor {
 
   import Monitor._
+
+  val log: DiagnosticLoggingAdapter = Logging(this)
+  log.mdc(Map("fileName" -> "monitor_events"))
+
+  override def postStop() = {
+    log.clearMDC()
+  }
+
 
   override def receive: Receive = {
 
     case START(timestamp, info) =>
-      //TODO: Log
+      logInfo(sender().path.toString, EVENTS.START, timestamp, info)
       events.append(sender().path.toString,MonitorEvent(EVENTS.START, timestamp, info))
 
     case STOP(timestamp, info) =>
-    //TODO: Log
+      logInfo(sender().path.toString, EVENTS.STOP, timestamp, info)
       events.append(sender().path.toString,MonitorEvent(EVENTS.STOP, timestamp, info))
 
     case RESTART(reason, timestamp) =>
-    //TODO: Log
+      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
       events.append(sender().path.toString,MonitorEvent(EVENTS.RESTART, timestamp, reason.getMessage))
 
     case TERMINATE(actorPath, timestamp, info) =>
-    //TODO: Log
+      logInfo(sender().path.toString, EVENTS.TERMINATE, timestamp, info)
       events.append(actorPath,MonitorEvent(EVENTS.TERMINATE, timestamp, info))
 
+  }
+
+  def logInfo(path:String, event:String, timestamp: Long, info:String, reason:Throwable = null) = {
+    if(reason != null){
+      log.error(reason, s"$event | $timestamp | $path | $info")
+    }else{
+      log.info(s"$event | $timestamp | $path | $info")
+    }
   }
 
 }
