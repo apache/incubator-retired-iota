@@ -158,6 +158,12 @@ protected object Utils {
       }
     }
   }
+
+  /**
+    * timestamp in milliseconds
+    * @return Long
+    */
+  def getTimestamp:Long = System.currentTimeMillis()
 }
 
 object JSON_PATH{

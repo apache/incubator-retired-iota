@@ -82,17 +82,20 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
   }
 
   override final def preStart() = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.START(Utils.getTimestamp)
     onStart()
     startScheduler()
   }
 
   override final def postStop() = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.STOP(Utils.getTimestamp)
     log.info(s"STOPPED actor ${self.path.name}")
     stopScheduler()
     onStop()
   }
 
   override final def postRestart(reason: Throwable) = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.RESTART(reason, Utils.getTimestamp)
     log.info(s"RESTARTED Actor ${self.path.name}")
     preStart()
     onRestart(reason)

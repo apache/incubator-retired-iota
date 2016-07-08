@@ -30,13 +30,22 @@ object Application extends App {
 
   CONFIG.loadUserConfiguration(if(args.length == 1) args(0) else "")
 
+  SYSTEM_ACTORS
+
+}
+
+object SYSTEM_ACTORS{
+
   implicit val system = ActorSystem("FEY-MANAGEMENT-SYSTEM")
 
   val fey = system.actorOf(FeyCore.props, name = "FEY-CORE")
 
   val service = system.actorOf(Props[MyServiceActor], name = "FEY_REST_API")
 
+  val monitoring = system.actorOf(Props[Monitor], "FEY-MONITOR")
+
   implicit val timeout = Timeout(800.seconds)
-  IO(Http) ? Http.Bind(service, interface = "0.0.0.0", port = 16666)
+  IO(Http) ? Http.Bind(SYSTEM_ACTORS.service, interface = "0.0.0.0", port = 16666)
+
 
 }

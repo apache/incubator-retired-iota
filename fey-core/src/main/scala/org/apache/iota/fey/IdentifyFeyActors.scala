@@ -82,7 +82,7 @@ protected object IdentifyFeyActors{
     */
   def generateTreeJson(): String = {
     val trie = new Trie()
-    actorsPath.map(_.replace("user/","")).foreach(trie.appendPath(_))
+    actorsPath.map(_.replace("user/","")).foreach(trie.append(_))
 
     Json.stringify(trie.print)
   }

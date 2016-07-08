@@ -50,6 +50,7 @@ protected class Ensemble(val orchestrationID: String,
       context.actorSelection(s"*") ! FeyGenericActor.PRINT_PATH
 
     case Terminated(actor) =>
+      SYSTEM_ACTORS.monitoring  ! Monitor.TERMINATE(actor.path.toString, Utils.getTimestamp)
       log.error(s"DEAD nPerformers ${actor.path.name}")
       context.children.foreach{ child =>
         context.unwatch(child)
@@ -79,6 +80,8 @@ protected class Ensemble(val orchestrationID: String,
     */
   override def preStart() = {
 
+    SYSTEM_ACTORS.monitoring  ! Monitor.START(Utils.getTimestamp)
+
     val connectors_js = (ensembleSpec \ CONNECTIONS).as[List[JsObject]]
     val performers_js = (ensembleSpec \ PERFORMERS).as[List[JsObject]]
 
@@ -96,7 +99,12 @@ protected class Ensemble(val orchestrationID: String,
 
   }
 
+  override def postStop() = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.STOP(Utils.getTimestamp)
+  }
+
   override def postRestart(reason: Throwable): Unit = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.RESTART(reason, Utils.getTimestamp)
     preStart()
   }
 
