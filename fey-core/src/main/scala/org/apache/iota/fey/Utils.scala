@@ -191,6 +191,7 @@ object CONFIG{
   var CHEKPOINT_ENABLED = true
   var LOG_LEVEL = ""
   var LOG_APPENDER = ""
+  var MESSAGES_PER_RESIZE = 500
 
   def loadUserConfiguration(path: String) = {
 
@@ -210,7 +211,8 @@ object CONFIG{
       JAR_REPOSITORY = app.getString("jar-repository")
       CHEKPOINT_ENABLED = app.getBoolean("enable-checkpoint")
       LOG_LEVEL = app.getString("log-level").toUpperCase()
-      LOG_APPENDER = app.getString("log_appender").toUpperCase()
+      LOG_APPENDER = app.getString("log-appender").toUpperCase()
+      MESSAGES_PER_RESIZE = app.getInt("auto-scale.messages-per-resize")
 
     setLogbackConfiguration()
   }

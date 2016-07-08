@@ -164,8 +164,10 @@ protected class Ensemble(val orchestrationID: String,
 
         var actor:ActorRef = null
         if(performerInfo.autoScale > 0) {
-          val resizer = DefaultResizer(lowerBound = 1, upperBound = performerInfo.autoScale, messagesPerResize = 200, backoffThreshold = 0.4)
+          val resizer = DefaultResizer(lowerBound = 1, upperBound = performerInfo.autoScale,
+            messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = 0.4)
           val smallestMailBox = SmallestMailboxPool(1, Some(resizer))
+
           actor = context.actorOf(
             smallestMailBox.props(Props(clazz,
               performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, true)),
