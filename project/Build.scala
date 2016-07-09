@@ -21,10 +21,9 @@ import sbt.Keys._
 object ModuleDependencies {
 
   import Dependencies._
-
-  val FeyDependencies = compile(akka_actor,typesafe_config,playJson,slf4j,log4jbind,sprayCan,sprayRouting,jsonValidator,javaFilter)
-  val StreamDependencies = provided(akka_actor, fey)
-  val ZMQDependencies = provided(akka_actor,  fey) ++ compile(zmq)
+  val FeyDependencies           = compile(akka_actor,typesafe_config,playJson,slf4j,log4jbind,sprayCan,sprayRouting,jsonValidator,javaFilter)
+  val StreamDependencies        = provided(akka_actor, fey)
+  val ZMQDependencies           = provided(akka_actor,  fey) ++ compile(zmq)
   val VirtualSensorDependencies = provided(akka_actor,  fey) ++ compile(math3)
 }
 
@@ -35,7 +34,7 @@ object IotaBuild extends Build {
   lazy val parent = Project(
     id = "apache-incubator-iota",
     base = file("."),
-    aggregate = Seq(Stream, ZMQ, VirtualSensor),
+    aggregate = Seq(Stream, ZMQ, VirtualSensor, Fey),
     settings = rootbuildSettings ++ Seq(
       aggregate in update := false
     )
