@@ -74,6 +74,7 @@ protected class FeyCore extends Actor with ActorLogging{
       deleteOrchestration(orchID)
 
     case Terminated(actor) =>
+      SYSTEM_ACTORS.monitoring ! Monitor.TERMINATE(actor.path.toString, Utils.getTimestamp)
       actor.path.name match {
         case IDENTIFIER_NAME =>
           createIdentifierActor()
@@ -99,17 +100,24 @@ protected class FeyCore extends Actor with ActorLogging{
     * Clean up Fey Cache
     */
   override def postStop() = {
+    SYSTEM_ACTORS.monitoring ! Monitor.STOP(Utils.getTimestamp)
     FEY_CACHE.activeOrchestrations.clear()
     FEY_CACHE.orchestrationsAwaitingTermination.clear()
     ORCHESTRATION_CACHE.orchestration_metadata.clear()
   }
 
   override def preStart() = {
+    SYSTEM_ACTORS.monitoring ! Monitor.START(Utils.getTimestamp)
     log.info("Starting Fey Core")
     if (CHEKPOINT_ENABLED) {
       processInitialFiles(CHECKPOINT_DIR, true)
     }
     self ! START
+  }
+
+  override def postRestart(reason: Throwable): Unit = {
+    SYSTEM_ACTORS.monitoring ! Monitor.RESTART(reason, Utils.getTimestamp)
+    preStart()
   }
 
   override val supervisorStrategy =
@@ -400,6 +408,7 @@ protected object FeyCore{
       .getLines()
       .mkString(""))).get
   }
+
 }
 
 private object FEY_CACHE{

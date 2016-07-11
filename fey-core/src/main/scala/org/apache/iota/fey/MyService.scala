@@ -19,6 +19,7 @@ package org.apache.iota.fey
 
 import akka.actor.Actor
 import org.apache.iota.fey.FeyCore.JSON_TREE
+import play.api.libs.json.Json
 import spray.http.MediaTypes._
 import spray.routing._
 
@@ -38,6 +39,8 @@ sealed trait MyService extends HttpService {
 
   val home = pathPrefix("fey")
   val activeActors = path("activeactors")
+  val actorLifecycle = path("actorslifecycle")
+  val eventsTable = path("monitoringevents")
   val test = path("test")
 
   val myRoute =
@@ -46,10 +49,28 @@ sealed trait MyService extends HttpService {
         get{
           respondWithMediaType(`text/html`) {
             complete {
-              Application.fey ! JSON_TREE
+              SYSTEM_ACTORS.fey ! JSON_TREE
               Thread.sleep(2000)
               val json = IdentifyFeyActors.generateTreeJson()
               IdentifyFeyActors.getHTMLTree(json)
+            }
+          }
+        }
+      } ~
+      actorLifecycle {
+        get{
+          respondWithMediaType(`application/json`) {
+            complete {
+              Json.stringify(Monitor.events.printWithEvents)
+            }
+          }
+        }
+      } ~
+        eventsTable {
+        get{
+          respondWithMediaType(`text/html`) {
+            complete {
+              Monitor.getHTMLevents
             }
           }
         }

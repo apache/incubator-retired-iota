@@ -69,12 +69,19 @@ class DirectoryWatcherActor(val fileExtension: String) extends Actor with ActorL
   var watchThread = new Thread(watchFileTask, "WatchService")
 
   override def preStart() {
+    SYSTEM_ACTORS.monitoring  ! Monitor.START(Utils.getTimestamp)
     watchThread.setDaemon(true)
     watchThread.start()
   }
 
   override def postStop() {
+    SYSTEM_ACTORS.monitoring  ! Monitor.STOP(Utils.getTimestamp)
     watchThread.interrupt()
+  }
+
+  override def postRestart(reason: Throwable): Unit = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.RESTART(reason, Utils.getTimestamp)
+    preStart()
   }
 
   override def receive: Receive = {

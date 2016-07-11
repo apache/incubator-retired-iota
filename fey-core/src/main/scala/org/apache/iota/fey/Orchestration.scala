@@ -50,6 +50,7 @@ protected class Orchestration(val name: String,
       context.actorSelection(s"*") ! Ensemble.PRINT_ENSEMBLE
 
     case Terminated(actor) =>
+      SYSTEM_ACTORS.monitoring  ! Monitor.TERMINATE(actor.path.toString, Utils.getTimestamp)
       context.unwatch(actor)
       log.warning(s"ACTOR DEAD ${actor.path}")
       ensembles.remove(actor.path.name)
@@ -68,16 +69,19 @@ protected class Orchestration(val name: String,
     }
 
   override def preStart(): Unit = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.START(Utils.getTimestamp)
     if (ORCHESTRATION_CACHE.orchestration_metadata.contains(guid)){
       replayOrchestrationState()
     }
   }
 
   override def postStop() = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.STOP(Utils.getTimestamp)
     log.info(s"STOPPED ${self.path.name}")
   }
 
   override def postRestart(reason: Throwable): Unit = {
+    SYSTEM_ACTORS.monitoring  ! Monitor.RESTART(reason, Utils.getTimestamp)
     log.info(s"RESTARTED ${self.path}")
     preStart()
   }
