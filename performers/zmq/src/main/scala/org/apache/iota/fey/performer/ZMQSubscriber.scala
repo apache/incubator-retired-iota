@@ -57,7 +57,7 @@ class ZMQSubscriber(override val params: Map[String, String] = Map.empty,
         val address = new String(subscriber.recv(0))
         // Read message contents
         val contents = new String(subscriber.recv(0))
-        log.info(s"HERE IT IS $address : $contents")
+        log.debug(s"HERE IT IS $address : $contents")
         count += 1
       }
     }
@@ -92,16 +92,16 @@ class ZMQSubscriber(override val params: Map[String, String] = Map.empty,
   }
 
   override def customReceive: Receive = {
-    case x => log.info(s"Untreated $x")
+    case x => log.debug(s"Untreated $x")
   }
 
   override def execute() = {
-    log.info(s"Msg count: $count")
+    log.debug(s"Msg count: $count")
   }
 
   override def processMessage[T](message: T, sender: ActorRef): Unit = {
     message match {
-      case _ => log.info("Ignoring this message as format not expected")
+      case _ => log.debug("Ignoring this message as format not expected")
     }
   }
 

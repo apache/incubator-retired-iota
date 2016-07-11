@@ -41,7 +41,7 @@ class Timestamp(override val params: Map[String, String] = Map.empty,
   }
 
   override def customReceive: Receive = {
-    case x => log.info(s"Untreated $x")
+    case x => log.debug(s"Untreated $x")
   }
 
   override def processMessage[T](message: T, sender: ActorRef): Unit = {
@@ -49,7 +49,7 @@ class Timestamp(override val params: Map[String, String] = Map.empty,
 
   override def execute() = {
     val ts = java.lang.System.currentTimeMillis()
-    log.info(ts.toString)
+    log.debug(ts.toString)
     propagateMessage(ts.toString)
   }
 

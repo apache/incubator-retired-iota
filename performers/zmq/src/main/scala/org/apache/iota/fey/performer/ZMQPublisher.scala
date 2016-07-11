@@ -84,11 +84,11 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
   }
 
   override def customReceive: Receive = {
-    case x => log.info(s"Untreated $x")
+    case x => log.debug(s"Untreated $x")
   }
 
   override def execute() = {
-    log.info(s"Msg count: $count")
+    log.debug(s"Msg count: $count")
   }
 
   override def processMessage[T](message: T, sender: ActorRef): Unit = {
@@ -114,7 +114,7 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
   }
 
   def _zmq_send(Message: String) = {
-    log.info(s"messsage =$Message")
+    log.debug(s"messsage =$Message")
     pub.send(Message)
     count += 1
   }

@@ -49,7 +49,7 @@ class Heartbeat(override val params: Map[String, String] = Map.empty,
   }
 
   override def execute() = {
-    log.info("Alive")
+    log.debug("Alive")
     propagateMessage("Alive")
   }
 

@@ -77,7 +77,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
   }
 
   override def customReceive: Receive = {
-    case x => log.info(s"Untreated $x")
+    case x => log.debug(s"Untreated $x")
   }
 
   override def processMessage[T](message: T, sender: ActorRef): Unit = {
@@ -97,7 +97,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
       case "vibration" => out = "DATA|cloud|" + lrn + "|" + ts + "|{\"blob\":\"" + vib + "\"}"
       case "wav" => out = "DATA|cloud|" + lrn + "|" + ts + "|{\"wav\":\"" + sound + "\"}"
     }
-    log.info(out)
+    log.debug(out)
     propagateMessage(out)
   }
 
@@ -145,7 +145,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
       try {
         expected_value = ev.toFloat
       } catch {
-        case e: Exception => log.info(s"Expected a Float you used $ev ")
+        case e: Exception => log.error(s"Expected a Float you used $ev ")
       }
 
     }

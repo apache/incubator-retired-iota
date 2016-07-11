@@ -86,5 +86,3 @@ metastore_db/
 #nohup files
 nohup*.out
 
-#generated jars
-fey-examples/active-jar-repo/*.jar

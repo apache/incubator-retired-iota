@@ -24,16 +24,16 @@ import scala.concurrent.duration._
 
 object Application extends App {
 
-  println("Starting")
-
-  implicit val system = ActorSystem("STREAM-RUN")
-
-  val timestamp = system.actorOf(Props(classOf[Timestamp], Map.empty, 1.minutes, Map.empty, 1.seconds, "", "", false), name = "TIMESTAMP")
-
-  timestamp ! PROCESS("Stream it")
-
-  val heartbeat = system.actorOf(Props(classOf[Heartbeat], Map.empty, 1.minutes, Map.empty, 1.seconds, "", "", false), name = "HEARTBEAT")
-
-  heartbeat ! PROCESS("Stream it")
+//  println("Starting")
+//
+//  implicit val system = ActorSystem("STREAM-RUN")
+//
+//  val timestamp = system.actorOf(Props(classOf[Timestamp], Map.empty, 1.minutes, Map.empty, 1.seconds, "", "", false), name = "TIMESTAMP")
+//
+//  timestamp ! PROCESS("Stream it")
+//
+//  val heartbeat = system.actorOf(Props(classOf[Heartbeat], Map.empty, 1.minutes, Map.empty, 1.seconds, "", "", false), name = "HEARTBEAT")
+//
+//  heartbeat ! PROCESS("Stream it")
 
 }
