@@ -32,7 +32,7 @@ object IotaBuild extends Build {
   import BuildSettings._
 
   lazy val parent = Project(
-    id = "apache-incubator-iota",
+    id = "iota",
     base = file("."),
     aggregate = Seq(Stream, ZMQ, VirtualSensor, Fey),
     settings = rootbuildSettings ++ Seq(

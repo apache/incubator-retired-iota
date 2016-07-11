@@ -6,7 +6,7 @@ object BuildSettings {
 
   import Dependencies.Resolvers._
 
-  val ParentProject = "jars_parent"
+  val ParentProject = "iota"
   val Fey = "fey_core"
   val Stream = "fey_stream"
   val ZMQ = "fey_zmq"
@@ -41,7 +41,7 @@ object BuildSettings {
   lazy val FeybuildSettings = Defaults.coreDefaultSettings ++ Seq(
     name := Fey,
     version := "1.0-SNAPSHOT",
-    scalaVersion := Version,
+    scalaVersion := ScalaVersion,
     description := "Framework of the event processing / actions engine for IOTA",
     scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
     mainClass := Some("org.apache.iota.fey.Application"),
