@@ -1,0 +1,368 @@
+{
+  "guid": "RaspberryPi",
+  "command": "CREATE",
+  "timestamp": "1467731017",
+  "name": "RaspberryPi",
+  "ensembles": [
+    {
+      "guid": "TEMPERATURE",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "Heartbeat",
+          "schedule": 30000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-stream.jar",
+            "classPath": "org.apache.iota.fey.performer.Heartbeat",
+            "parameters": {
+            }
+          }
+        },
+        {
+          "guid": "Cherry",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-cherry-rp.jar",
+            "classPath": "org.apache.iota.fey.performer.CherryRP",
+            "parameters": {
+              "cherry": "{\"op\":\"cov\", \"args\":[{\"string\":\"1ed6aed2b028486fa478b3d3f6e7ee61\"}, {\"float\":0.5} ]}",
+              "lrns": "[\"1ed6aed2b028486fa478b3d3f6e7ee61\"]",
+              "host": "192.168.0.17"
+            }
+          }
+        },
+        {
+          "guid": "ZMQPublisher",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey-zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {
+              "zmq_port": "5559",
+              "zmq_target": "192.168.0.139"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "Heartbeat": [
+            "Cherry"
+          ]
+        },
+        {
+          "Cherry": [
+            "ZMQPublisher"
+          ]
+        }
+      ]
+    },
+    {
+      "guid": "PRESSURE",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "Heartbeat",
+          "schedule": 10000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-stream.jar",
+            "classPath": "org.apache.iota.fey.performer.Heartbeat",
+            "parameters": {
+            }
+          }
+        },
+        {
+          "guid": "Cherry",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-cherry-rp.jar",
+            "classPath": "org.apache.iota.fey.performer.CherryRP",
+            "parameters": {
+              "cherry": "{\"op\":\"cov\", \"args\":[{\"string\":\"3fd7aed2b028486fa478b3d3f6e7ee61\"}, {\"float\":0.1} ]}",
+              "lrns": "[\"3fd7aed2b028486fa478b3d3f6e7ee61\"]",
+              "host": "192.168.0.17"
+            }
+          }
+        },
+        {
+          "guid": "ZMQPublisher",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey-zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {
+              "zmq_port": "5559",
+              "zmq_target": "192.168.0.139"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "Heartbeat": [
+            "Cherry"
+          ]
+        },
+        {
+          "Cherry": [
+            "ZMQPublisher"
+          ]
+        }
+      ]
+    },
+    {
+      "guid": "HUMIDITY",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "Heartbeat",
+          "schedule": 30000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-stream.jar",
+            "classPath": "org.apache.iota.fey.performer.Heartbeat",
+            "parameters": {
+            }
+          }
+        },
+        {
+          "guid": "Cherry",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-cherry-rp.jar",
+            "classPath": "org.apache.iota.fey.performer.CherryRP",
+            "parameters": {
+              "cherry": "{\"op\":\"cov\", \"args\":[{\"string\":\"2fd6aed2b028486fa478b3d3f6e7ee61\"}, {\"float\":5.0} ]}",
+              "lrns": "[\"2fd6aed2b028486fa478b3d3f6e7ee61\"]",
+              "host": "192.168.0.17"
+            }
+          }
+        },
+        {
+          "guid": "ZMQPublisher",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey-zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {
+              "zmq_port": "5559",
+              "zmq_target": "192.168.0.139"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "Heartbeat": [
+            "Cherry"
+          ]
+        },
+        {
+          "Cherry": [
+            "ZMQPublisher"
+          ]
+        }
+      ]
+    },
+    {
+      "guid": "SOUNDDB",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "Heartbeat",
+          "schedule": 10000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-stream.jar",
+            "classPath": "org.apache.iota.fey.performer.Heartbeat",
+            "parameters": {
+            }
+          }
+        },
+        {
+          "guid": "Cherry",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-cherry-rp.jar",
+            "classPath": "org.apache.iota.fey.performer.CherryRP",
+            "parameters": {
+              "cherry": "{\"op\":\"cov\", \"args\":[{\"string\":\"7fd6aed2b028486fa478b3d3f6e7ee61\"}, {\"float\":3.0} ]}",
+              "lrns": "[\"7fd6aed2b028486fa478b3d3f6e7ee61\"]",
+              "host": "192.168.0.17"
+            }
+          }
+        },
+        {
+          "guid": "ZMQPublisher",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey-zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {
+              "zmq_port": "5559",
+              "zmq_target": "192.168.0.139"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "Heartbeat": [
+            "Cherry"
+          ]
+        },
+        {
+          "Cherry": [
+            "ZMQPublisher"
+          ]
+        }
+      ]
+    },
+    {
+      "guid": "VIBRATION_AGGREGATE",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "Heartbeat",
+          "schedule": 10000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-stream.jar",
+            "classPath": "org.apache.iota.fey.performer.Heartbeat",
+            "parameters": {
+            }
+          }
+        },
+        {
+          "guid": "Cherry",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-cherry-rp.jar",
+            "classPath": "org.apache.iota.fey.performer.CherryRP",
+            "parameters": {
+              "cherry": "{\"op\":\"cov\", \"args\":[{\"string\":\"5fd6aed2b028486fa478b3d3f6e7ee61\"}, {\"float\":0.02} ]}",
+              "lrns": "[\"5fd6aed2b028486fa478b3d3f6e7ee61\"]",
+              "host": "192.168.0.17"
+            }
+          }
+        },
+        {
+          "guid": "ZMQPublisher",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey-zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {
+              "zmq_port": "5559",
+              "zmq_target": "192.168.0.139"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "Heartbeat": [
+            "Cherry"
+          ]
+        },
+        {
+          "Cherry": [
+            "ZMQPublisher"
+          ]
+        }
+      ]
+    },
+    {
+      "guid": "VIBRATION",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "VibrationStream",
+          "schedule": 1000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-cherry-rp.jar",
+            "classPath": "org.apache.iota.fey.performer.CherryRP",
+            "parameters": {
+              "cherry": "{\"didVibrationChange\":\"6fd6aed2b028486fa478b3d3f6e7ee61\"}",
+              "lrns": "[\"6fd6aed2b028486fa478b3d3f6e7ee61\"]",
+              "host": "192.168.0.17"
+            }
+          }
+        },
+        {
+          "guid": "ZMQPublisher",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey-zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {
+              "zmq_port": "5559",
+              "zmq_target": "192.168.0.139"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "VibrationStream": [
+            "ZMQPublisher"
+          ]
+        }
+      ]
+    },
+    {
+      "guid": "SOUND_WAV",
+      "command": "NONE",
+      "performers": [
+        {
+          "guid": "Cherry",
+          "schedule": 3000,
+          "backoff": 0,
+          "source": {
+            "name": "fey-cherry-rp.jar",
+            "classPath": "org.apache.iota.fey.performer.CherryRP",
+            "parameters": {
+              "cherry": "{\"didSoundChange\":\"9fd6aed2b028486fa478b3d3f6e7ee61\"}",
+              "lrns": "[\"9fd6aed2b028486fa478b3d3f6e7ee61\"]",
+              "host": "192.168.0.17"
+            }
+          }
+        },
+        {
+          "guid": "ZMQPublisher",
+          "schedule": 0,
+          "backoff": 0,
+          "source": {
+            "name": "fey-zmq.jar",
+            "classPath": "org.apache.iota.fey.performer.ZMQPublisher",
+            "parameters": {
+              "zmq_port": "5559",
+              "zmq_target": "192.168.0.139"
+            }
+          }
+        }
+      ],
+      "connections": [
+        {
+          "Cherry": [
+            "ZMQPublisher"
+          ]
+        }
+      ]
+    }
+  ]
+}
