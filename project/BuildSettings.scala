@@ -7,10 +7,10 @@ object BuildSettings {
   import Dependencies.Resolvers._
 
   val ParentProject = "iota"
-  val Fey = "fey_core"
-  val Stream = "fey_stream"
-  val ZMQ = "fey_zmq"
-  val VirtualSensor = "fey_virtual_sensor"
+  val Fey = "fey-core"
+  val Stream = "fey-stream"
+  val ZMQ = "fey-zmq"
+  val VirtualSensor = "fey-virtual-sensor"
 
   val Version = "1.0"
   val ScalaVersion = "2.11.8"

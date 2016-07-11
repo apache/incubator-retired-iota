@@ -1,5 +1,0 @@
-fey-global-configuration{
-  json-repository = "/Users/tonyfaustini19/IntelliJProjects/apache-incubator-iota/performers/fey/FeyJSONRepo"
-  jar-repository = "/Users/tonyfaustini19/IntelliJProjects/apache-incubator-iota/performers/fey/FeyJARRepo"
-  enable-checkpoint=false
-}

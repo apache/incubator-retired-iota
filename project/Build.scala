@@ -41,7 +41,7 @@ object IotaBuild extends Build {
   )
 
   lazy val fey = Project(
-    id = "fey_core",
+    id = "fey-core",
     base = file("./fey-core"),
     settings = BasicSettings ++ FeybuildSettings ++ Seq(
       libraryDependencies ++= ModuleDependencies.FeyDependencies
@@ -49,7 +49,7 @@ object IotaBuild extends Build {
     ))
 
   lazy val stream = Project(
-    id = "fey_stream",
+    id = "fey-stream",
     base = file("./performers/stream"),
     settings = BasicSettings ++ StreambuildSettings ++ Seq(
       libraryDependencies ++= ModuleDependencies.StreamDependencies
@@ -57,14 +57,14 @@ object IotaBuild extends Build {
     ))
 
    lazy val zmq = Project(
-    id = "fey_zmq",
+    id = "fey-zmq",
     base = file("./performers/zmq"),
     settings = BasicSettings ++ ZMQbuildSettings ++ Seq(
       libraryDependencies ++= ModuleDependencies.ZMQDependencies
     ))
 
   lazy val virtual_sensor = Project(
-    id = "fey_virtual_sensor",
+    id = "fey-virtual-sensor",
     base = file("./performers/virtual_sensor"),
     settings = BasicSettings ++ VirtualSensorbuildSettings ++ Seq(
       libraryDependencies ++= ModuleDependencies.VirtualSensorDependencies

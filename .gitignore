@@ -87,4 +87,4 @@ metastore_db/
 nohup*.out
 
 #generated jars
-performers/fey/FeyJARRepo/*.jar
+fey-examples/active-jar-repo/*.jar
