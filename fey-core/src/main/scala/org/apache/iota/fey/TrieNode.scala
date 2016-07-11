@@ -59,6 +59,10 @@ class Trie{
     getObjectEvent(root, null)
   }
 
+  def getRootChildren():ArrayBuffer[TrieNode] = {
+    root.children
+  }
+
   private def getObject(root: TrieNode, parent: TrieNode):JsObject = {
     if(root != null) {
      Json.obj("name" -> root.path,

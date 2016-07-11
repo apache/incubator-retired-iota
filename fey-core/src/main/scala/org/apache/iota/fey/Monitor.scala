@@ -20,6 +20,8 @@ package org.apache.iota.fey
 import akka.actor.Actor
 import akka.event.{DiagnosticLoggingAdapter, Logging}
 
+import scala.collection.mutable.ArrayBuffer
+
 /**
   * Created by barbaragomes on 7/8/16.
   */
@@ -80,6 +82,28 @@ protected object Monitor{
     */
   val events: Trie = new Trie()
 
+  //Static HTML content from d3
+  val html = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/eventsTable.html"), "UTF-8")
+    .getLines()
+    .mkString("\n")
+
+  def getHTMLevents: String = {
+    html.replace("$EVENTS_TABLE_CONTENT", mapEventsToRows(events.getRootChildren(), "").mkString("\n"))
+  }
+
+  def mapEventsToRows(actors: ArrayBuffer[TrieNode], prefix:String): ArrayBuffer[String] = {
+    actors.map(actor => {
+      val currentPath = if (prefix == "/user/FEY-CORE") actor.path else s"$prefix/${actor.path}"
+      val events = actor.events.map(event => {
+        getTableLine(currentPath, event.timestamp, event.event, event.info)
+      })
+      mapEventsToRows(actor.children, currentPath) ++ events
+    }).flatten
+  }
+
+  private def getTableLine(path: String,timestamp: Long, event: String, info: String):String = {
+    s"<tr><td>$path</td><td>$event</td><td>$info</td><td>$timestamp</td></tr>"
+  }
 }
 
 /**

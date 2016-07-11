@@ -40,6 +40,7 @@ sealed trait MyService extends HttpService {
   val home = pathPrefix("fey")
   val activeActors = path("activeactors")
   val actorLifecycle = path("actorslifecycle")
+  val eventsTable = path("monitoringevents")
   val test = path("test")
 
   val myRoute =
@@ -61,6 +62,15 @@ sealed trait MyService extends HttpService {
           respondWithMediaType(`application/json`) {
             complete {
               Json.stringify(Monitor.events.printWithEvents)
+            }
+          }
+        }
+      } ~
+        eventsTable {
+        get{
+          respondWithMediaType(`text/html`) {
+            complete {
+              Monitor.getHTMLevents
             }
           }
         }
