@@ -168,10 +168,10 @@ protected class Ensemble(val orchestrationID: String,
           createFeyActor(connID, connectors.getOrElse(connID,Array.empty),tmpActors)
         }).toMap
 
-
         var actor:ActorRef = null
         val actorProps = getPerformer(performerInfo, connections)
         if(performerInfo.autoScale > 0) {
+
           val resizer = DefaultResizer(lowerBound = 1, upperBound = performerInfo.autoScale,
             messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = 0.4)
           val smallestMailBox = SmallestMailboxPool(1, Some(resizer))
