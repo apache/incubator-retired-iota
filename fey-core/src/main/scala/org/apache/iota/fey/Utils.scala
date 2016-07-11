@@ -211,7 +211,7 @@ object CONFIG{
           log.warn(s"No user configuration defined. Check if your configuration path $path is right.")
           ConfigFactory.load()
       }
-    }.getConfig("fey-global-configuration")
+    }.getConfig("fey-global-configuration").resolve()
 
       CHECKPOINT_DIR = app.getString("checkpoint-directory")
       JSON_REPOSITORY = app.getString("json-repository")
