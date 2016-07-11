@@ -1,21 +1,22 @@
 {
-  "guid": "SimpleOrchestration",
+  "guid": "Orch2",
   "command": "CREATE",
-  "timestamp": "1467731017",
-  "name": "SimpleOrchestration",
+  "timestamp": "591997890",
+  "name": "DESCRIPTION",
   "ensembles": [
     {
-      "guid": "SimpleEnsemble",
+      "guid": "En2",
       "command": "NONE",
       "performers": [
         {
-          "guid": "SimplePerformer",
+          "guid": "S2",
           "schedule": 1000,
           "backoff": 0,
           "source": {
             "name": "fey_stream.jar",
             "classPath": "org.apache.iota.fey.performer.Timestamp",
-            "parameters": {}
+            "parameters": {
+            }
           }
         }
       ],

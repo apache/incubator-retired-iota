@@ -1,24 +1,28 @@
-import sbt.{Defaults, Watched}
+import sbt._
 import sbt.Keys._
+import sbtassembly.AssemblyPlugin.autoImport._
 
 object BuildSettings {
 
   import Dependencies.Resolvers._
 
   val ParentProject = "jars_parent"
+  val Fey = "fey_core"
   val Stream = "fey_stream"
   val ZMQ = "fey_zmq"
-
+  val VirtualSensor = "fey_virtual_sensor"
 
   val Version = "1.0"
   val ScalaVersion = "2.11.8"
+
+
 
   lazy val rootbuildSettings = Defaults.coreDefaultSettings ++ Seq(
     name := ParentProject,
     version := Version,
     scalaVersion := ScalaVersion,
     organization := "org.apache.iota",
-    description := "Fey External Jars Project",
+    description := "Apache iota build",
     scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint")
   )
 
@@ -32,6 +36,31 @@ object BuildSettings {
     resolvers := allResolvers,
     fork := true,
     connectInput in run := true
+  )
+
+  lazy val FeybuildSettings = Defaults.coreDefaultSettings ++ Seq(
+    name := Fey,
+    version := "1.0-SNAPSHOT",
+    scalaVersion := Version,
+    description := "Framework of the event processing / actions engine for IOTA",
+    scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
+    mainClass := Some("org.apache.iota.fey.Application"),
+    assemblyJarName in assembly := "iota-fey-core.jar",
+    publishTo := {
+      val nexus = "s3://maven.litbit.com/"
+      if (isSnapshot.value)
+        Some("snapshots" at nexus + "snapshots")
+      else
+        Some("releases"  at nexus + "releases")
+    },
+    publishMavenStyle := true,
+    conflictManager := ConflictManager.all,
+    assemblyMergeStrategy in assembly := {
+      case PathList("org", "slf4j", xs @ _*)         => MergeStrategy.last
+      case x =>
+        val oldStrategy = (assemblyMergeStrategy in assembly).value
+        oldStrategy(x)
+    }
   )
 
   lazy val StreambuildSettings = Defaults.coreDefaultSettings ++ Seq(
@@ -48,6 +77,15 @@ object BuildSettings {
     version := Version,
     scalaVersion := ScalaVersion,
     description := "ZMQ Application",
+    scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
+    mainClass := Some("org.apache.iota.fey.performer.Application")
+  )
+
+  lazy val VirtualSensorbuildSettings = Defaults.coreDefaultSettings ++ Seq(
+    name := VirtualSensor,
+    version := Version,
+    scalaVersion := ScalaVersion,
+    description := "Virtual Sensor Application",
     scalacOptions := Seq("-deprecation", "-unchecked", "-encoding", "utf8", "-Xlint"),
     mainClass := Some("org.apache.iota.fey.performer.Application")
   )

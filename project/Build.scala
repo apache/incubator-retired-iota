@@ -21,27 +21,36 @@ import sbt.Keys._
 object ModuleDependencies {
 
   import Dependencies._
-
-  val StreamDependencies = provided(akka_actor, fey)
-  val ZMQDependecies = provided(akka_actor,  fey) ++ compile(zmq)
+  val FeyDependencies           = compile(akka_actor,typesafe_config,playJson,slf4j,log4jbind,sprayCan,sprayRouting,jsonValidator,javaFilter)
+  val StreamDependencies        = provided(akka_actor, fey)
+  val ZMQDependencies           = provided(akka_actor,  fey) ++ compile(zmq)
+  val VirtualSensorDependencies = provided(akka_actor,  fey) ++ compile(math3)
 }
 
-object PerformersBuild extends Build {
+object IotaBuild extends Build {
 
   import BuildSettings._
 
   lazy val parent = Project(
-    id = "jars_parent",
+    id = "apache-incubator-iota",
     base = file("."),
-    aggregate = Seq(Stream, ZMQ),
+    aggregate = Seq(Stream, ZMQ, VirtualSensor, Fey),
     settings = rootbuildSettings ++ Seq(
       aggregate in update := false
     )
   )
 
+  lazy val fey = Project(
+    id = "fey_core",
+    base = file("./fey-core"),
+    settings = BasicSettings ++ FeybuildSettings ++ Seq(
+      libraryDependencies ++= ModuleDependencies.FeyDependencies
+
+    ))
+
   lazy val stream = Project(
     id = "fey_stream",
-    base = file("./stream"),
+    base = file("./performers/stream"),
     settings = BasicSettings ++ StreambuildSettings ++ Seq(
       libraryDependencies ++= ModuleDependencies.StreamDependencies
 
@@ -49,9 +58,16 @@ object PerformersBuild extends Build {
 
    lazy val zmq = Project(
     id = "fey_zmq",
-    base = file("./zmq"),
+    base = file("./performers/zmq"),
     settings = BasicSettings ++ ZMQbuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.ZMQDependecies
+      libraryDependencies ++= ModuleDependencies.ZMQDependencies
+    ))
+
+  lazy val virtual_sensor = Project(
+    id = "fey_virtual_sensor",
+    base = file("./performers/virtual_sensor"),
+    settings = BasicSettings ++ VirtualSensorbuildSettings ++ Seq(
+      libraryDependencies ++= ModuleDependencies.VirtualSensorDependencies
     ))
 
 }
