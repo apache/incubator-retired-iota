@@ -49,6 +49,10 @@
               "type":"string",
               "pattern":"\\w+(\\.jar)"
             },
+            "location":{
+              "type":"string",
+              "pattern":"(?i)(^(http|https|file)):\/\/"
+            },
             "classPath":{
               "type":"string",
               "pattern":"\\w+"
