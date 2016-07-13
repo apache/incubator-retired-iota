@@ -24,9 +24,10 @@ import java.nio.file.{Files, Paths}
 import ch.qos.logback.classic.{Level, Logger, LoggerContext}
 import ch.qos.logback.core.joran.spi.JoranException
 import ch.qos.logback.core.util.StatusPrinter
+import com.eclipsesource.schema.SchemaType
 import com.typesafe.config.ConfigFactory
 import org.slf4j.LoggerFactory
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 import scala.collection.mutable.HashMap
 import scala.io.Source
@@ -71,7 +72,7 @@ protected object Utils {
     loadedJars.get(path) match {
 
       case None =>
-        val urls:Array[URL] = Array(new URL("jar:file:" + path+"!/"))
+        val urls:Array[URL] = Array(new URL(s"jar:file:$path!/"))
         val cl: URLClassLoader = URLClassLoader.newInstance(urls)
         val clazz = cl.loadClass(className)
         val feyClazz = clazz.asInstanceOf[Class[FeyGenericActor]]
@@ -109,9 +110,10 @@ protected object Utils {
     }
   }
 
-  def renameProcessedFile(file: File, extension: String) = {
-    if(CHEKPOINT_ENABLED)
+  def renameProcessedFile(file: File, extension: String): Unit = {
+    if(CHEKPOINT_ENABLED) {
       file.renameTo(new File(s"${file.getAbsoluteFile}.$extension"))
+    }
   }
 
   /**
@@ -125,8 +127,9 @@ protected object Utils {
     if (CHEKPOINT_ENABLED) {
       FEY_CACHE.activeOrchestrations.get(orchestrationID) match {
         case None =>
-          if (!delete)
+          if (!delete) {
             log.warn(s"Could not save state for Orchestration ${orchestrationID}. It is not active on Fey.")
+          }
           else {
             val file = new File(s"$CHECKPOINT_DIR/${orchestrationID}.json")
             if (!file.createNewFile()) {
@@ -161,9 +164,11 @@ protected object Utils {
 
   /**
     * timestamp in milliseconds
+    *
     * @return Long
     */
   def getTimestamp:Long = System.currentTimeMillis()
+
 }
 
 object JSON_PATH{
@@ -182,6 +187,7 @@ object JSON_PATH{
   val ORCHESTRATION_TIMESTAMP = "timestamp"
   val PERFORMER_AUTO_SCALE = "autoScale"
   val CONTROL_AWARE = "controlAware"
+  val JAR_LOCATION = "location"
 }
 
 object CONFIG{
@@ -199,7 +205,9 @@ object CONFIG{
   var CHEKPOINT_ENABLED = true
   var LOG_LEVEL = ""
   var LOG_APPENDER = ""
-  var MESSAGES_PER_RESIZE = 500
+  var MESSAGES_PER_RESIZE:Int = 500
+  var DYNAMIC_JAR_REPO = ""
+  var DYNAMIC_JAR_FORCE_PULL = false
 
   def loadUserConfiguration(path: String) : Unit = {
 
@@ -221,6 +229,8 @@ object CONFIG{
       LOG_LEVEL = app.getString("log-level").toUpperCase()
       LOG_APPENDER = app.getString("log-appender").toUpperCase()
       MESSAGES_PER_RESIZE = app.getInt("auto-scale.messages-per-resize")
+      DYNAMIC_JAR_REPO = app.getString("dynamic-jar-population.downloaded-repository")
+      DYNAMIC_JAR_FORCE_PULL = app.getBoolean("dynamic-jar-population.force-pull")
 
     setLogbackConfiguration()
   }
@@ -265,6 +275,16 @@ object CONFIG{
         log.warn(s"Log level $x is not defined. Default to INFO")
         Level.INFO
     }
+  }
+
+  /**
+    * Loads the specification for validating a Fey JSON
+    */
+  val JSON_SPEC: SchemaType = {
+    Json.fromJson[SchemaType](Json.parse(scala.io.Source
+      .fromInputStream(getClass.getResourceAsStream("/fey-json-schema-validator.json"))
+      .getLines()
+      .mkString(""))).get
   }
 }
 
