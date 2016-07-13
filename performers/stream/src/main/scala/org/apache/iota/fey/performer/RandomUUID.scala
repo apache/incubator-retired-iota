@@ -22,13 +22,13 @@ import org.apache.iota.fey.FeyGenericActor
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
 
-class Timestamp(override val params: Map[String, String] = Map.empty,
-                override val backoff: FiniteDuration = 1.minutes,
-                override val connectTo: Map[String, ActorRef] = Map.empty,
-                override val schedulerTimeInterval: FiniteDuration = 30.seconds,
-                override val orchestrationName: String = "",
-                override val orchestrationID: String = "",
-                override val autoScale: Boolean = false) extends FeyGenericActor {
+class RandomUUID(override val params: Map[String, String] = Map.empty,
+                 override val backoff: FiniteDuration = 1.minutes,
+                 override val connectTo: Map[String, ActorRef] = Map.empty,
+                 override val schedulerTimeInterval: FiniteDuration = 30.seconds,
+                 override val orchestrationName: String = "",
+                 override val orchestrationID: String = "",
+                 override val autoScale: Boolean = false) extends FeyGenericActor {
 
   override def onStart : Unit = {
   }
@@ -48,9 +48,9 @@ class Timestamp(override val params: Map[String, String] = Map.empty,
   }
 
   override def execute() : Unit = {
-    val ts = java.lang.System.currentTimeMillis()
-    log.debug(ts.toString)
-    propagateMessage(ts.toString)
+    val uuid = RandomUUID.this
+    log.debug(uuid.toString)
+    propagateMessage(uuid.toString)
   }
 
 }
