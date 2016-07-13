@@ -1,19 +1,18 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements.  See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License.  You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+
+// Licensed to the Apache Software Foundation (ASF) under one or more
+// contributor license agreements.  See the NOTICE file distributed with
+// this work for additional information regarding copyright ownership.
+// The ASF licenses this file to You under the Apache License, Version 2.0
+// (the "License"); you may not use this file except in compliance with
+// the License.  You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// ee the License for the specific language governing permissions and
+// limitations under the License.
 
 package org.apache.iota.fey.performer
 
@@ -25,6 +24,7 @@ import scala.concurrent.duration._
 import org.apache.commons.math3.distribution.NormalDistribution
 import org.joda.time.DateTime
 import play.api.libs.json.{JsObject, JsValue, Json}
+
 
 class Sensor(override val params: Map[String, String] = Map.empty,
              override val backoff: FiniteDuration = 1.minutes,
@@ -39,7 +39,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
   var expected_value: Double = 70.0
   var sigma: Double = 1.0
   var exceptions: JsValue = null
-  var value: NormalDistribution = null
+  var output: NormalDistribution = null
   var sensor_type = "environmental"
   // wav    vibration
   var vib = ""
@@ -49,9 +49,9 @@ class Sensor(override val params: Map[String, String] = Map.empty,
   var normal_sound = ""
   var exception_sound = ""
 
-  override def onStart = {
+  override def onStart : Unit = {
 
-    _params_check()
+    paramsCheck()
 
     if (sensor_type == "vibration") {
       normal_vib = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/vibration"))
@@ -69,10 +69,10 @@ class Sensor(override val params: Map[String, String] = Map.empty,
     }
   }
 
-  override def onStop = {
+  override def onStop : Unit = {
   }
 
-  override def onRestart(reason: Throwable) = {
+  override def onRestart(reason: Throwable) : Unit = {
     // Called after actor is up and running - after self restart
   }
 
@@ -83,19 +83,19 @@ class Sensor(override val params: Map[String, String] = Map.empty,
   override def processMessage[T](message: T, sender: ActorRef): Unit = {
   }
 
-  override def execute() = {
+  override def execute() : Unit = {
     val ts = java.lang.System.currentTimeMillis().toString
     var out = ""
     if (!isException) {
-      value = new NormalDistribution(expected_value, sigma)
+      output = new NormalDistribution(expected_value, sigma)
       sound = normal_sound
       vib = normal_vib
     }
 
     sensor_type match {
-      case "environmental" => out = "DATA|cloud|" + lrn + "|" + ts + "|{\"x\":\"" + value.sample() + "\"}"
-      case "vibration" => out = "DATA|cloud|" + lrn + "|" + ts + "|{\"blob\":\"" + vib + "\"}"
-      case "wav" => out = "DATA|cloud|" + lrn + "|" + ts + "|{\"wav\":\"" + sound + "\"}"
+      case "environmental" => out = s"""$lrn|$ts|{"x":${output.sample()}}"""
+      case "vibration"     => out = s"""$lrn|$ts|{"blob":$vib}"""
+      case "wav"           => out = s"""$lrn|$ts|{"wav":$sound}"""
     }
     log.debug(out)
     propagateMessage(out)
@@ -120,9 +120,9 @@ class Sensor(override val params: Map[String, String] = Map.empty,
             sound = exception_sound
           } else {
             ev = (x \ "expected_value").as[Double]
-            value = new NormalDistribution(ev, sigma)
+            output = new NormalDistribution(ev, sigma)
           }
-          return true
+          true
         }
       } catch {
         case e: Exception => log.error(s"Bad exception specified $x")
@@ -133,7 +133,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
     false
   }
 
-  def _params_check() = {
+  def paramsCheck() : Unit = {
     if (params.contains("lrn")) {
       lrn = params("lrn")
     }
@@ -160,9 +160,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
     if (params.contains("sensor_type")) {
       sensor_type = params("sensor_type")
       sensor_type match {
-        case "wav" =>
-        case "vibration" =>
-        case "environmental" =>
+        case "wav" | "vibration" | "environmental" =>
         case default => log.error(s"""Only "vibration", "wav", and "environmental" are permitted you have $sensor_type""")
           sensor_type = "environmental"
       }

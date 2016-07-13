@@ -14,7 +14,7 @@
           "backoff": 0,
           "source": {
             "name": "fey-stream.jar",
-            "classPath": "org.apache.iota.fey.performer.RandomUUID",
+            "classPath": "org.apache.iota.fey.performer.Timestamp",
             "parameters": {
             }
           }

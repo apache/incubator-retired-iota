@@ -13,7 +13,7 @@
           "schedule": 5000,
           "backoff": 0,
           "source": {
-            "name": "fey-virtual-sensors.jar",
+            "name": "fey-virtual-sensor.jar",
             "classPath": "org.apache.iota.fey.performer.Sensor",
             "parameters": {
               "exceptions": "[ {\"start_time\":[9,28,30],\"end_time\":[9,29,0],\"expected_value\":900}, {\"start_time\":[11,0,0],\"end_time\":[11,21,3],\"expected_value\":99.0} ]"
