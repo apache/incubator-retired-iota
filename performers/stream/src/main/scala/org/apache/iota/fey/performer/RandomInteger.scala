@@ -49,9 +49,9 @@ class RandomInteger(override val params: Map[String, String] = Map.empty,
   }
 
   override def execute() : Unit = {
-    val ri = RandomInteger.this
-    log.debug(ri.toString)
-    propagateMessage(ri.toString)
+    val ri = scala.util.Random.nextInt().toString
+    log.debug(ri)
+    propagateMessage(ri)
   }
 
 }

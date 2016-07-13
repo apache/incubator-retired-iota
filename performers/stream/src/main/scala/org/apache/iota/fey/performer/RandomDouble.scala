@@ -22,13 +22,13 @@ import org.apache.iota.fey.FeyGenericActor
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
 
-class RandomFloat(override val params: Map[String, String] = Map.empty,
-                  override val backoff: FiniteDuration = 1.minutes,
-                  override val connectTo: Map[String, ActorRef] = Map.empty,
-                  override val schedulerTimeInterval: FiniteDuration = 30.seconds,
-                  override val orchestrationName: String = "",
-                  override val orchestrationID: String = "",
-                  override val autoScale: Boolean = false) extends FeyGenericActor {
+class RandomDouble(override val params: Map[String, String] = Map.empty,
+                   override val backoff: FiniteDuration = 1.minutes,
+                   override val connectTo: Map[String, ActorRef] = Map.empty,
+                   override val schedulerTimeInterval: FiniteDuration = 30.seconds,
+                   override val orchestrationName: String = "",
+                   override val orchestrationID: String = "",
+                   override val autoScale: Boolean = false) extends FeyGenericActor {
 
   override def onStart : Unit = {
   }
@@ -48,9 +48,9 @@ class RandomFloat(override val params: Map[String, String] = Map.empty,
   }
 
   override def execute() : Unit = {
-    val rf = RandomFloat.this
-    log.debug(rf.toString)
-    propagateMessage(rf.toString)
+    val rd = scala.util.Random.nextGaussian().toString
+    log.debug(rd)
+    propagateMessage(rd)
   }
 
 }

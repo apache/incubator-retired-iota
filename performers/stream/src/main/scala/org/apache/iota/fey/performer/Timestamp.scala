@@ -48,9 +48,9 @@ class Timestamp(override val params: Map[String, String] = Map.empty,
   }
 
   override def execute() : Unit = {
-    val ts = java.lang.System.currentTimeMillis()
-    log.debug(ts.toString)
-    propagateMessage(ts.toString)
+    val ts = java.lang.System.currentTimeMillis().toString
+    log.debug(ts)
+    propagateMessage(ts)
   }
 
 }

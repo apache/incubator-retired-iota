@@ -48,9 +48,9 @@ class RandomUUID(override val params: Map[String, String] = Map.empty,
   }
 
   override def execute() : Unit = {
-    val uuid = RandomUUID.this
-    log.debug(uuid.toString)
-    propagateMessage(uuid.toString)
+    val uuid = java.util.UUID.randomUUID.toString
+    log.debug(uuid)
+    propagateMessage(uuid)
   }
 
 }
