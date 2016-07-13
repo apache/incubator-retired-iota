@@ -34,7 +34,7 @@ object IotaBuild extends Build {
   lazy val parent = Project(
     id = "iota",
     base = file("."),
-    aggregate = Seq(Stream, ZMQ, VirtualSensor, Fey),
+    aggregate = Seq(stream, zmq, virtual_sensor, fey),
     settings = rootbuildSettings ++ Seq(
       aggregate in update := false
     )
