@@ -78,7 +78,7 @@ protected class Ensemble(val orchestrationID: String,
   /**
     * Uses the json spec to create the performers
     */
-  override def preStart() = {
+  override def preStart() : Unit = {
 
     SYSTEM_ACTORS.monitoring  ! Monitor.START(Utils.getTimestamp)
 
@@ -99,7 +99,7 @@ protected class Ensemble(val orchestrationID: String,
 
   }
 
-  override def postStop() = {
+  override def postStop() : Unit = {
     SYSTEM_ACTORS.monitoring  ! Monitor.STOP(Utils.getTimestamp)
   }
 
@@ -242,7 +242,7 @@ protected class Ensemble(val orchestrationID: String,
     s"Edges: \n$ed \nNodes: \n\t$nd \nPerformer \n\t$actors"
   }
 
-  def stopPerformers() = {
+  def stopPerformers(): Unit = {
     performer.foreach(actor => actor._2 ! PoisonPill)
   }
 

@@ -31,7 +31,7 @@ class WatchDirectoryTask(watcherActor: ActorRef) extends Runnable {
 
   private val watchService = FileSystems.getDefault.newWatchService()
 
-  def watch(path: Path) = path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY)
+  def watch(path: Path) : Unit = path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY)
 
   override def run() {
     try {

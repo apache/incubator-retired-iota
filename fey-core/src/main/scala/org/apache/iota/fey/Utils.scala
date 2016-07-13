@@ -121,7 +121,7 @@ protected object Utils {
     * @param delete
     * @return
     */
-  def updateOrchestrationState(orchestrationID: String, delete: Boolean = false) = {
+  def updateOrchestrationState(orchestrationID: String, delete: Boolean = false) : Unit = {
     if (CHEKPOINT_ENABLED) {
       FEY_CACHE.activeOrchestrations.get(orchestrationID) match {
         case None =>
@@ -201,7 +201,7 @@ object CONFIG{
   var LOG_APPENDER = ""
   var MESSAGES_PER_RESIZE = 500
 
-  def loadUserConfiguration(path: String) = {
+  def loadUserConfiguration(path: String) : Unit = {
 
     val app = {
       if(path != "" && Files.exists(Paths.get(path))) {
@@ -228,7 +228,7 @@ object CONFIG{
   /**
     * Resets logback context configuration and loads the new one
     */
-  def setLogbackConfiguration() = {
+  def setLogbackConfiguration() : Unit = {
     val  context: LoggerContext = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     try {
       val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[Logger]
@@ -240,7 +240,7 @@ object CONFIG{
     StatusPrinter.printInCaseOfErrorsOrWarnings(context)
   }
 
-  def setLogAppenders(root: Logger) = {
+  def setLogAppenders(root: Logger) : Unit = {
     LOG_APPENDER match {
       case "FILE" =>
         root.getAppender(CONSOLE_APPENDER).stop()
