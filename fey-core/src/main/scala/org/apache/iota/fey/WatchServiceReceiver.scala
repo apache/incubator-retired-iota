@@ -29,6 +29,8 @@ import scala.io.Source
 
 class WatchServiceReceiver(receiverActor: ActorRef) extends JsonReceiver{
 
+  processInitialFiles()
+
   private val watchService = FileSystems.getDefault.newWatchService()
 
   def watch(path: Path) : Unit = path.register(watchService, ENTRY_CREATE, ENTRY_MODIFY)
@@ -45,7 +47,6 @@ class WatchServiceReceiver(receiverActor: ActorRef) extends JsonReceiver{
   }
 
   override def execute(): Unit = {
-    processInitialFiles()
 
     val key = watchService.take()
     val eventsIterator = key.pollEvents().iterator()
@@ -55,6 +56,7 @@ class WatchServiceReceiver(receiverActor: ActorRef) extends JsonReceiver{
       val relativePath = event.context().asInstanceOf[Path]
       val path = key.watchable().asInstanceOf[Path].resolve(relativePath)
 
+      log.debug(s"${event.kind()} --- $path")
       event.kind() match {
         case (ENTRY_CREATE | ENTRY_MODIFY) if path.toString.endsWith(CONFIG.JSON_EXTENSION) =>
           processJson(path.toString, path.toFile)
