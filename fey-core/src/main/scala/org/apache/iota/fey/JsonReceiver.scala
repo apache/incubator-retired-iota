@@ -30,6 +30,7 @@ import java.nio.file.{Files, Paths}
 
 import org.apache.commons.io.IOUtils
 import org.apache.commons.codec.binary.Base64
+import scala.util.Properties._
 
 /**
   * Basic class to be used when implementing a new JSON receiver
@@ -87,11 +88,20 @@ trait JsonReceiver extends Runnable{
     (json \ ENSEMBLES).as[List[JsObject]].foreach(ensemble => {
       (ensemble \ PERFORMERS).as[List[JsObject]].foreach(performer => {
         if((performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION)){
+          val location = (performer \ SOURCE \ JAR_LOCATION).as[JsObject]
           val jarName = (performer \ SOURCE \ SOURCE_NAME).as[String]
-          val jarLocation = (performer \ SOURCE \ JAR_LOCATION).as[String].toLowerCase
-          if( (jarLocation.startsWith("https://") || jarLocation.startsWith("http://")) && !jarDownloaded(jarName)){
-            val jarLocation = (performer \ SOURCE \ JAR_LOCATION).as[String]
-            downloadJAR(jarLocation, jarName)
+          val url = (location \ JAR_LOCATION_URL).as[String].toLowerCase
+          if( (url.startsWith("https://") || url.startsWith("http://")) && !jarDownloaded(jarName)){
+
+            val credentials:Option[JsObject] = {
+              if(location.keys.contains(JAR_CREDENTIALS_URL)){
+                Option((location \ JAR_CREDENTIALS_URL).as[JsObject])
+              }else{
+                None
+              }
+            }
+
+            downloadJAR(url, jarName, credentials)
           }
         }
       })
@@ -114,23 +124,24 @@ trait JsonReceiver extends Runnable{
     }
   }
 
-  private final def downloadJAR(url: String, jarName: String): Unit = {
+  private final def downloadJAR(url: String, jarName: String, credentials: Option[JsObject]): Unit = {
     var outputStream: FileOutputStream = null
     try{
-      val extractedURL = extractCredentials(s"$url/$jarName")
-      log.info(s"Downloading $jarName from ${extractedURL._1}")
+      log.info(s"Downloading $jarName from $url")
 
-      val connection = new URL(extractedURL._1).openConnection
+      val connection = new URL(s"$url/$jarName").openConnection
 
-      // Add authentication Header if credentials is defined
-      extractedURL._2 match {
-        case Some(credentials) =>
-          connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION, HttpBasicAuth.getHeader(credentials._1, credentials._2))
+      resolveCredentials(credentials) match{
+        case Some(userpass) =>
+          connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION, HttpBasicAuth.getHeader(userpass._1, userpass._2))
         case None =>
       }
+
+      // Download Jar
       outputStream = new FileOutputStream(s"${CONFIG.DYNAMIC_JAR_REPO}/$jarName")
       IOUtils.copy(connection.getInputStream,outputStream)
       outputStream.close()
+
     }catch{
       case e: Exception =>
         if(outputStream != null) {
@@ -142,24 +153,18 @@ trait JsonReceiver extends Runnable{
   }
 
   /**
-    *
-    * @param url
-    * @return (NO_CRED_URL, (USER, PASSWORD))
+    * Tries to resolve the credentials looking to the environment variable
+    * If it is not possible to find a env var with that name, then use the name itself
+    * @param credentials
+    * @return (user, password)
     */
-  private final def extractCredentials(url: String): (String, Option[(String, String)]) = {
-    if(url.contains("@")) {
-      val atIndex = url.indexOf("@")
-      if (url.startsWith("https")) {
-        val cred = url.substring(8, atIndex)
-        val userPass = cred.split(":")
-        (url.replace(s"$cred@",""), Option(userPass(0),userPass(1)))
-      } else {
-        val cred = url.substring(7, atIndex)
-        val userPass = cred.split(":")
-        (url.replace(s"$cred@",""), Option(userPass(0),userPass(1)))
-      }
-    }else{
-      (url, None)
+  def resolveCredentials(credentials: Option[JsObject]):Option[(String, String)] = {
+    credentials match {
+      case None => None
+      case Some(cred) =>
+        val user = (cred \ JAR_CRED_USER).as[String]
+        val password = (cred \ JAR_CRED_PASSWORD).as[String]
+        Option(envOrElse(user,user), envOrElse(password,password))
     }
   }
 
@@ -178,11 +183,11 @@ trait JsonReceiver extends Runnable{
 }
 
 object HttpBasicAuth {
-  val BASIC = "Basic";
-  val AUTHORIZATION = "Authorization";
+  val BASIC = "Basic"
+  val AUTHORIZATION = "Authorization"
 
   def encodeCredentials(username: String, password: String): String = {
-    new String(Base64.encodeBase64String((username + ":" + password).getBytes))
+    new String(Base64.encodeBase64((username + ":" + password).getBytes))
   }
 
   def getHeader(username: String, password: String): String =

@@ -189,6 +189,10 @@ object JSON_PATH{
   val PERFORMER_AUTO_SCALE = "autoScale"
   val CONTROL_AWARE = "controlAware"
   val JAR_LOCATION = "location"
+  val JAR_LOCATION_URL = "url"
+  val JAR_CREDENTIALS_URL = "credentials"
+  val JAR_CRED_USER = "user"
+  val JAR_CRED_PASSWORD = "password"
 }
 
 object CONFIG{

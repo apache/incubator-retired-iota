@@ -265,27 +265,27 @@ protected class FeyCore extends Actor with ActorLogging{
     }
   }
 
-  def printStatus() = {
+  def printStatus(): Unit = {
     printActiveOrchestrations
     printWaitingTermination
     printActiveActors
   }
 
-  def printWaitingTermination() = {
+  def printWaitingTermination(): Unit = {
     val ids = FEY_CACHE.orchestrationsAwaitingTermination.map(orchestration => {
       orchestration._1
     }).mkString("[",",","]")
     log.info(s"\n === Waiting: $ids")
   }
 
-  def printActiveOrchestrations() = {
+  def printActiveOrchestrations(): Unit = {
     val ids = FEY_CACHE.activeOrchestrations.map(orchestration => {
       orchestration._1
     }).mkString("[",",","]")
     log.info(s"\n === Active: $ids")
   }
 
-  def printActiveActors() = {
+  def printActiveActors(): Unit = {
     identifier ! IdentifyFeyActors.IDENTIFY_TREE(self.path.toString)
   }
 

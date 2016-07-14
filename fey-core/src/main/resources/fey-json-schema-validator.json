@@ -45,13 +45,27 @@
             "minimum":0
           },
           "source":{
+            "type": "object",
             "name":{
               "type":"string",
               "pattern":"\\w+(\\.jar)"
             },
             "location":{
-              "type":"string",
-              "pattern":"(?i)(^(http|https|file)):\/\/"
+              "type": "object",
+              "url": {
+                "type": "string",
+                "pattern": "(?i)(^(http|https|file)):\/\/"
+              },
+              "credentials":{
+                "user":{
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                },
+                "required":["user","password"]
+              },
+              "required":["url"]
             },
             "classPath":{
               "type":"string",
