@@ -117,14 +117,8 @@ By default Fey will not clean up the downloaded-repository every time it is laun
 
 ```json
 dynamic-jar-population{
-    // Directory where Fey will download the jars that the location is
-    // specified in the JSON
-    downloaded-repository = ${HOME}"/.fey/jars"
-    
-    // If enabled, Fey will clean up the jar-downloaded-repository everytime
-    // it starts, forcing the jars to be downloaded again
-    // If false, Fey will only download jars that are not in jar-downloaded-repository
-    force-pull = false
+  downloaded-repository = ${HOME}"/.fey/jars"
+  force-pull = false
 }
 ```
 
@@ -156,8 +150,8 @@ The Orchestration specification is defined at the root of the JSON, and requires
 | **guid** | String | Global unique Orchestration identifier. If this property changes it value, it will be considered a new Orchestration by Fey.|
 | **timestamp** | String | Orchestration timestamp. Holds the timestamp for the last action in the Orchestration.|
 | **name** |String | Orchestration name.|
-| **command** | String| See details in [Orchestration Commands](#markdown-header-orchestration-commands). | 
-| **ensembles** | Array[Object] | Holds all the Ensembles that this Orchestration will be running. See [Ensembles](#markdown-header-ensembles) for more details| 
+| **command** | String| See details in [Orchestration Commands](#orchestration-commands). | 
+| **ensembles** | Array[Object] | Holds all the Ensembles that this Orchestration will be running. See [Ensembles](#ensembles) for more details| 
 
 ### Ensemble
 An Orchestration can have one or more Ensembles. Each Ensemble must define the following properties:
@@ -165,15 +159,15 @@ An Orchestration can have one or more Ensembles. Each Ensemble must define the f
 | Property                    | Type                 | Description   |
 | :---------------------- | :------------------- | :------------ |
 | **guid** | String | Must be unique inside the Orchestration |
-| **command** | String | See details in [Ensembles Commands](#markdown-header-ensemble-commands). |
-| **performers** | Array[Object] | See details in [Ensemble Performers](#markdown-header-ensemble-performers). |
-| **connections** | Array[Object] | See details in [Ensemble Connections](#markdown-header-ensemble-connections). |
+| **command** | String | See details in [Ensembles Commands](#ensemble-commands). |
+| **performers** | Array[Object] | See details in [Ensemble Performers](#ensemble-performers). |
+| **connections** | Array[Object] | See details in [Ensemble Connections](#ensemble-connections). |
 
 ###Orchestration Commands
 Fey drives the Orchestration based on a set of 4 commands:
 
 1. `CREATE`: Fey will check if there is an Orchestration with the same _guid_ running. If there isn't, Fey will create the Orchestration, the Ensembles and its Performers, and start them. If there is already an Orchestration running, Fey will log an WARN, and nothing will be created or updated. 
-2. `UPDATE`: Fey will check if there is already an Orchestration with the same _guid_ running. If there is, Fey will check the command for each one of the Ensembles and execute the respective action. If there isn't, Fey will log an WARN, and nothing will happen. Please, see [Ensemble Commands](#markdown-header-ensemble-commands) for a list of available commands.
+2. `UPDATE`: Fey will check if there is already an Orchestration with the same _guid_ running. If there is, Fey will check the command for each one of the Ensembles and execute the respective action. If there isn't, Fey will log an WARN, and nothing will happen. Please, see [Ensemble Commands](#ensemble-commands) for a list of available commands.
 3. `DELETE`: If there is an Orchestration with the same _guid_ running, Fey will stop all of the actors and delete the Orchestration.
 4. `RECREATE`: The recreate commands does not care if the Orchestration exists or not, it will always try to delete the Orchestration and then create a new one based on the JSON specification.
 
@@ -195,9 +189,9 @@ For Fey, each Performer represents a Generic Actor which should have the followi
 | **guid** | String | Must be a unique ID inside the Ensemble |
 | **controlAware** | Boolean | `Optional` property. Tells if the actor should use a Control aware Mailbox, so the Control messages have higher priority over the others. If not specified then the actor will use the Default mailbox.
 | **autoScale** | Integer | `Optional` property. Tells if the actor should be a load balanced actor. If zero or not specified, the actor will be started without the load balancing property. If greater than zero, the actor will be started using load balancing and the max number of replicated actors is the specified number. It means that if the value is 10, then the actor will be a load balanced actor and it can scale up to 10 replicas. |
-| **schedule** | Integer | Defines the time interval in `Milliseconds` for the actor [scheduler](#markdown-header-scheduler). If zero, no scheduler will be started. |
-| **backoff** | Integer | Defines the time window in `Milliseconds` that the actor should backoff after receiving a PROCESS message. (See [Handling Backoff](#markdown-header-handling-backoff) for more details.) |
-| **source** | Object | Defines the needed information used by Fey to load the GenericActor. See [Source](#markdown-header-source-property) for details.
+| **schedule** | Integer | Defines the time interval in `Milliseconds` for the actor [scheduler](#scheduler). If zero, no scheduler will be started. |
+| **backoff** | Integer | Defines the time window in `Milliseconds` that the actor should backoff after receiving a PROCESS message. (See [Handling Backoff](#handling-backoff) for more details.) |
+| **source** | Object | Defines the needed information used by Fey to load the GenericActor. See [Source](#source-property) for details.
 
 #### Source Property
 
@@ -205,13 +199,13 @@ The source property of an Performer holds the necessary information for loading 
 
 | Property                    | Type                 | Description   |
 | :---------------------- | :------------------- | :------------ |
-| **name** | String | Jar name that contains the Generic Actor. This jar must be present in the specified [jar repo](#markdown-header-running-Fey). The jar name is not case sensitive. |
+| **name** | String | Jar name that contains the Generic Actor. This jar must be present in the specified [jar repo](#running-Fey). The jar name is not case sensitive. |
 | **classPath** | String | class path for the GenericActor class inside the _.jar_. It should include the package as well.|
 | **parameters** | Object | Contains any additional information that will be used by the GenericActor. It will be passed to the actor as a `HashMap[String,String]` in which the key is the property name, and the value is the property value. It can contain as many properties as you want to.|
 | **location** | Object | Optional. Please, see [Dynamic Jar Population](#dynamic-jar-population) for more details.
 
 ### Ensemble Connections
-The Connections property of an Ensemble defines the connection between the Performers. See [connectTo](#markdown-header-constructor) constructor parameter for more details about how this information is used.
+The Connections property of an Ensemble defines the connection between the Performers. See [connectTo](#constructor) constructor parameter for more details about how this information is used.
 
 An object inside the Connections property obeys the following pattern:
 
@@ -330,7 +324,7 @@ class MyGenericActor(override val params: Map[String, String] = Map.empty,
 
 Fey's generic actor final overrides the life-cycle actor hooks, such as: `preStart`, `postStop`, `preRestart`, `postRestart`. But, it does offers the user the ability to execute additional commands by overriding the following methods:
 
-* **onStart**: Will be called as part of the actor's life-cycle `preStart`, right after make the decision of starting a scheduler or not (see **[Scheduler](#markdown-header-scheduler)** for more details). Be careful when using this method for an autoscaling Performer, since it will be called for every routee (Akka terminology). So, if you are doing something like binding to a port in the OnStart method of the Performer, other routees may not be able to bind to the same port again. (See **[Auto Scaling](#markdown-header-auto-scaling)** for more details)
+* **onStart**: Will be called as part of the actor's life-cycle `preStart`, right after make the decision of starting a scheduler or not (see **[Scheduler](#scheduler)** for more details). Be careful when using this method for an autoscaling Performer, since it will be called for every routee (Akka terminology). So, if you are doing something like binding to a port in the OnStart method of the Performer, other routees may not be able to bind to the same port again. (See **[Auto Scaling](#auto-scaling)** for more details)
 * **onStop**: Will be called as part of the actor's life-cycle `postStop`, after stopping the scheduler. Normally, this method is used to "clean-up" the actor, like closing connections.
 * **onRestart**: Will be called as part of the actor's life-cycle `postRestart`. When the actor is restarted, all of its children will be stopped and the `postStop` is going to be called, followed by calling `preStart`
 
@@ -340,7 +334,7 @@ Fey's generic actor final overrides the actor's `receive` method. But it gives y
 
 1. **PRINT-PATH**: logs the actor's path
 2. **STOP**: Stops himself
-3. **PROCESS(message: T)**: Generic typed message that should be used for the communication between generic actors. This message check if the backoff is enable, and if not, it calls the user-overridable _processMessage_ method. (See **[processing messages](#markdown-header-processing-messages)** for more details). 
+3. **PROCESS(message: T)**: Generic typed message that should be used for the communication between generic actors. This message check if the backoff is enable, and if not, it calls the user-overridable _processMessage_ method. (See **[processing messages](#processing-messages)** for more details). 
 4. **EXCEPTION(reason: Throwable)**: Throws the _Throwable_ so the actor's parent can handle it.
 
 All of the other messages that are not handled by the default _receive_ will be pass to the user-overridable **customReceive: Receive** method.
@@ -349,7 +343,7 @@ All of the other messages that are not handled by the default _receive_ will be 
 
 ###Propagating Messages
 
-Fey works with the concept that the actor will communicate with the actors that connects to it by sending _PROCESS_ messages. Having that in mind, the generic actor offers a final generic typed method (`propagateMessage(message:T)`) that sends a _PROCESS_ message to each one of the actors in the **[connectTo](#markdown-header-constructor)** parameter.
+Fey works with the concept that the actor will communicate with the actors that connects to it by sending _PROCESS_ messages. Having that in mind, the generic actor offers a final generic typed method (`propagateMessage(message:T)`) that sends a _PROCESS_ message to each one of the actors in the **[connectTo](#constructor)** parameter.
 
 `If you don't want to propagate the message to all of the actors that connects to it, you should implement a different propagate method.`
 
@@ -357,9 +351,9 @@ Fey works with the concept that the actor will communicate with the actors that 
 
 The `PROCESS[T](message: T)` is the global message to be used when communicating to other Fey actors. The actor can receive any type of message through it. 
 
-After receiving the `PROCESS` message, the actor will check if the [backoff](#markdown-header-handling-backoff) is enabled and, if it is enabled, nothing will happen and the message will not be processed, if it is not enabled then the actor will call the user-overridable `processMessage[T](message: T, sender: ActorRef)` method.
+After receiving the `PROCESS` message, the actor will check if the [backoff](#handling-backoff) is enabled and, if it is enabled, nothing will happen and the message will not be processed, if it is not enabled then the actor will call the user-overridable `processMessage[T](message: T, sender: ActorRef)` method.
 
-The default implementation of `processMessage[T](message: T, sender: ActorRef)` logs the message being processed, calls the [propagate](#markdown-header-propagating-messages) method and then starts the backoff by calling `startBackoff` method (see [Handling Backoff](#markdown-header-handling-backoff)).
+The default implementation of `processMessage[T](message: T, sender: ActorRef)` logs the message being processed, calls the [propagate](#propagating-messages) method and then starts the backoff by calling `startBackoff` method (see [Handling Backoff](#handling-backoff)).
 
 You could override this method to handle only the type of message that you are expecting and to execute some action when a message is received. In the example bellow, the actors only handles PROCESS message of type `Int` or `String`, and starts the backoff if the message is of type `Int`
 
@@ -381,15 +375,15 @@ override def processMessage[T](message:T, sender: ActorRef): Unit = {
 A lot of use cases will require the Performer (actor) stop processing messages for a time interval after some specific action happend. The generic actor offers a built-in backoff that is used only by the `PROCESS` message.
 
 Every time you need the actor to backoff after an action, you should call the `startBackoff` method.
-The `startBackoff` method uses the constructor parameter **[backoff](#markdown-header-constructor)** and sets an internal state of the actor called `endBackoff` with the time in which the actor should starting processing messages again.
-The `endBackoff` internal state is verified everytime the actor gets a **[PROCESS](#markdown-header-processing-messages)** message.
+The `startBackoff` method uses the constructor parameter **[backoff](#constructor)** and sets an internal state of the actor called `endBackoff` with the time in which the actor should starting processing messages again.
+The `endBackoff` internal state is verified everytime the actor gets a **[PROCESS](#processing-messages)** message.
 
 `Note: Be careful when calling startBackoff. Make sure it will just be affected by the flow around the PROCESS message`
 
 
 ###Scheduler
 
-The generic actor is able to start and control one scheduler. The scheduler will be started through the `preStart` life-cycle hook that will check if the constructor parameter **[schedulerTimeInterval](#markdown-header-constructor)** is non-zero then Fey starts a `system.scheduler` that executes every **[schedulerTimeInterval](#markdown-header-constructor)**. If the parameter is zero no scheduler will be started.
+The generic actor is able to start and control one scheduler. The scheduler will be started through the `preStart` life-cycle hook that will check if the constructor parameter **[schedulerTimeInterval](#constructor)** is non-zero then Fey starts a `system.scheduler` that executes every **[schedulerTimeInterval](#constructor)**. If the parameter is zero no scheduler will be started.
 
 Once started, the scheduler will call the user-overridable `execute()` method every schedulerTimeInterval. If the actor dies or get restarted, the scheduler will be cancelled and then started again (in case of restart).
 
