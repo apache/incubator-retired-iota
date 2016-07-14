@@ -201,7 +201,7 @@ protected class Ensemble(val orchestrationID: String,
     */
   private def getPerformer(performerInfo: Performer, connections: Map[String, ActorRef]): Props = {
 
-    val clazz = loadClazzFromJar(performerInfo.classPath, performerInfo.jarName)
+    val clazz = loadClazzFromJar(performerInfo.classPath, s"${performerInfo.jarLocation}/${performerInfo.jarName}", performerInfo.jarName)
 
     val autoScale = if(performerInfo.autoScale > 0) true else false
 
@@ -220,15 +220,15 @@ protected class Ensemble(val orchestrationID: String,
     * Load a clazz instance of FeyGenericActor from a jar
     *
     * @param classPath class path
-    * @param jarName jar name
+    * @param jarLocation Full path where to load the jar from
     * @return clazz instance of FeyGenericActor
     */
-  private def loadClazzFromJar(classPath: String, jarName: String):Class[FeyGenericActor] = {
+  private def loadClazzFromJar(classPath: String, jarLocation: String, jarName: String):Class[FeyGenericActor] = {
     try {
-      Utils.loadActorClassFromJar(s"${CONFIG.JAR_REPOSITORY}/$jarName",classPath)
+      Utils.loadActorClassFromJar(jarLocation,classPath,jarName)
     }catch {
       case e: Exception =>
-        log.error(e,s"Could not load class $classPath from jar $jarName. Please, check the Jar repository path as well the jar name")
+        log.error(e,s"Could not load class $classPath from jar $jarLocation. Please, check the Jar repository path as well the jar name")
         throw e
     }
   }
@@ -280,7 +280,8 @@ object Ensemble {
       val classPath: String = (performer \ SOURCE \ SOURCE_CLASSPATH).as[String]
       val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
       val controlAware:Boolean = if (performer.keys.contains(CONTROL_AWARE)) (performer \ CONTROL_AWARE).as[Boolean] else false
-      (id, new Performer(id, jarName, classPath,params,schedule.millisecond,backoff.millisecond, autoScale,controlAware))
+      val location: String = if ( (performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION) ) CONFIG.DYNAMIC_JAR_REPO else CONFIG.JAR_REPOSITORY
+      (id, new Performer(id, jarName, classPath,params,schedule.millisecond,backoff.millisecond, autoScale,controlAware, location))
     }).toMap
   }
 
@@ -316,4 +317,4 @@ object Ensemble {
 case class Performer(uid: String, jarName: String,
                 classPath: String, parameters: Map[String,String],
                 schedule: FiniteDuration, backoff: FiniteDuration,
-                autoScale: Int, controlAware: Boolean)
+                autoScale: Int, controlAware: Boolean, jarLocation: String)

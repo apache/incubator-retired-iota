@@ -1,3 +1,4 @@
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -37,8 +38,8 @@ protected class FeyCore extends Actor with ActorLogging{
   import FeyCore._
   import CONFIG._
 
-  var watcherActor: ActorRef = null
-  var identifier: ActorRef = null
+  val identifier: ActorRef = context.actorOf(Props(classOf[IdentifyFeyActors]), name = IDENTIFIER_NAME)
+  context.watch(identifier)
 
   override def receive: Receive = {
 
@@ -46,14 +47,13 @@ protected class FeyCore extends Actor with ActorLogging{
       printActiveActors()
 
     case START =>
-      createIdentifierActor()
-      processInitialFiles(JSON_REPOSITORY)
-      self ! WATCH_DIR(JSON_REPOSITORY)
+      val jsonReceiverActor: ActorRef = context.actorOf(Props[JsonReceiverActor], name = JSON_RECEIVER_NAME)
+      context.watch(jsonReceiverActor)
 
-    case NEW_FILE_ACTION(file) =>
+    case ORCHESTRATION_RECEIVED(orchestrationJson, file) =>
       log.info(s"NEW FILE ${file.getAbsolutePath}")
       try{
-        processJson(file)
+        processJson(orchestrationJson)
         renameProcessedFile(file, "processed")
       }catch {
         case e: Exception =>
@@ -61,33 +61,11 @@ protected class FeyCore extends Actor with ActorLogging{
           log.error(e, s"JSON not processed ${file.getAbsolutePath}")
       }
 
-    case WATCH_DIR(path) =>
-      if(watcherActor == null) {
-        watcherActor = context.actorOf(DirectoryWatcherActor.props(JSON_EXTENSION), name = WATCHER_NAME)
-        context.watch(watcherActor)
-
-      }
-      watcherActor ! DirectoryWatcherActor.MONITOR(Paths.get(path))
-
     case STOP_EMPTY_ORCHESTRATION(orchID) =>
       log.warning(s"Deleting Empty Orchestration $orchID")
       deleteOrchestration(orchID)
 
-    case Terminated(actor) =>
-      SYSTEM_ACTORS.monitoring ! Monitor.TERMINATE(actor.path.toString, Utils.getTimestamp)
-      actor.path.name match {
-        case IDENTIFIER_NAME =>
-          createIdentifierActor()
-        case WATCHER_NAME =>
-          watcherActor = null
-          self ! WATCH_DIR(JSON_REPOSITORY)
-        case guid: String =>
-          log.info(s"TERMINATED ${guid}")
-          FEY_CACHE.activeOrchestrations.remove(guid)
-          if(!FEY_CACHE.orchestrationsAwaitingTermination.isEmpty) {
-            checkForOrchestrationWaitingForTermination(guid)
-          }
-      }
+    case Terminated(actor) => processTerminatedMessage(actor)
 
     case GetRoutees => //Discard
 
@@ -96,24 +74,32 @@ protected class FeyCore extends Actor with ActorLogging{
 
   }
 
+  private def processTerminatedMessage(actorRef: ActorRef) = {
+    SYSTEM_ACTORS.monitoring ! Monitor.TERMINATE(actorRef.path.toString, Utils.getTimestamp)
+    log.info(s"TERMINATED ${actorRef.path.name}")
+    FEY_CACHE.activeOrchestrations.remove(actorRef.path.name)
+    if(!FEY_CACHE.orchestrationsAwaitingTermination.isEmpty) {
+      checkForOrchestrationWaitingForTermination(actorRef.path.name)
+    }
+  }
+
   /**
     * Clean up Fey Cache
     */
-  override def postStop() = {
+  override def postStop(): Unit = {
     SYSTEM_ACTORS.monitoring ! Monitor.STOP(Utils.getTimestamp)
     FEY_CACHE.activeOrchestrations.clear()
     FEY_CACHE.orchestrationsAwaitingTermination.clear()
     ORCHESTRATION_CACHE.orchestration_metadata.clear()
   }
 
-  override def preStart() = {
+  override def preStart(): Unit = {
     SYSTEM_ACTORS.monitoring ! Monitor.START(Utils.getTimestamp)
     log.info("Starting Fey Core")
-    if (CHEKPOINT_ENABLED) {
-      processInitialFiles(CHECKPOINT_DIR, true)
-    }
     self ! START
   }
+
+
 
   override def postRestart(reason: Throwable): Unit = {
     SYSTEM_ACTORS.monitoring ! Monitor.RESTART(reason, Utils.getTimestamp)
@@ -123,45 +109,12 @@ protected class FeyCore extends Actor with ActorLogging{
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 3, withinTimeRange = 1 minute) {
       case _: Exception =>
-        if(sender() == watcherActor) Stop
-        else Restart
+        Restart
     }
 
   /**
-    * Actor that prints all the actors in the fey core tree
-    */
-  private def createIdentifierActor() = {
-      identifier = context.actorOf(Props(classOf[IdentifyFeyActors]), name = IDENTIFIER_NAME)
-  }
-
-  /**
-    * Process all the files that are already in the dir
-    * before starting watching for new files
-    */
-  private def processInitialFiles(directory: String, delete: Boolean = false) = {
-    getFilesInDirectory(directory)
-      .filter(file => file.getName.endsWith(JSON_EXTENSION))
-      .foreach(file => {
-        try {
-          processJson(file)
-          if(delete){
-            file.delete()
-          }else {
-            renameProcessedFile(file, "processed")
-          }
-        } catch {
-          case e: Exception =>
-            renameProcessedFile(file, "failed")
-            log.error(e, s"JSON not processed ${file.getAbsolutePath}")
-        }
-      })
-  }
-
-  /**
-    * Process the JSON in the file.
     * Process the JSON is a binary operation.
     * The network only will be established if the entire JSON can be processed.
-    * Throws IllegalArgumentException if json cannot be parsed.
     * JSON commands:
     *   CREATE: tells Fey that there is no previous orchestration active for this JSON.
     *           Fey will create the orchestration and all the Ensembles in the JSON.
@@ -173,49 +126,20 @@ protected class FeyCore extends Actor with ActorLogging{
     *   RECREATE: Tells Fey that might exists an active orchestration, if that is the case, delete the orchestration and recreate it
     *             otherwise, simply create it.
     *
-    * @param file
+    * @param orchestrationJSON
     */
-  private def processJson(file: File): Unit ={
-    log.info(s"File: ${file.getAbsolutePath}")
-    loadJsonFromFile(file) match {
-      case Some(json) =>
-        if(validJSONSchema(json)) {
-          val orchestrationName = (json \ ORCHESTRATION_NAME).as[String]
-          val orchestrationID = (json \ GUID).as[String]
-          val orchestrationCommand = (json \ COMMAND).as[String].toUpperCase()
-          val orchestrationTimestamp = (json \ ORCHESTRATION_TIMESTAMP).as[String]
-          val ensembles = (json \ ENSEMBLES).as[List[JsObject]]
-          orchestrationCommand match {
-            case "RECREATE" => recreateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
-            case "CREATE" => createOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
-            case "UPDATE" => updateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
-            case "DELETE" => deleteOrchestration(orchestrationID)
-            case x => throw new CommandNotRecognized(s"Command: $x")
-          }
-        }
-      case None =>
-        throw new IllegalArgumentException(s"Could not parser the JSON in the file ${file.getAbsolutePath}")
-    }
-  }
-
-  def validJSONSchema(json: JsValue):Boolean = {
-    try {
-      val result = SchemaValidator.validate(jsonSchemaSpec, json)
-      if (result.isError) {
-        log.error("Incorrect JSON schema")
-        log.error(result.asEither.left.get.toJson.as[List[JsObject]].map(error => {
-          val path = (error \ "instancePath").as[String]
-          val msg = (error \ "msgs").as[List[String]].mkString("\n\t")
-          s"$path \n\tErrors: $msg"
-        }).mkString("\n"))
-        false
-      } else {
-        true
-      }
-    }catch{
-      case e: Exception =>
-        log.error(e,"Error while validating JSON")
-        false
+  private def processJson(orchestrationJSON: JsValue): Unit ={
+    val orchestrationName = (orchestrationJSON \ ORCHESTRATION_NAME).as[String]
+    val orchestrationID = (orchestrationJSON \ GUID).as[String]
+    val orchestrationCommand = (orchestrationJSON \ COMMAND).as[String].toUpperCase()
+    val orchestrationTimestamp = (orchestrationJSON \ ORCHESTRATION_TIMESTAMP).as[String]
+    val ensembles = (orchestrationJSON \ ENSEMBLES).as[List[JsObject]]
+    orchestrationCommand match {
+      case "RECREATE" => recreateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
+      case "CREATE" => createOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
+      case "UPDATE" => updateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
+      case "DELETE" => deleteOrchestration(orchestrationID)
+      case x => throw new CommandNotRecognized(s"Command: $x")
     }
   }
 
@@ -372,23 +296,17 @@ protected object FeyCore{
   case object JSON_TREE
 
   /**
-    * Send this message to Start Directory Watcher Thread
-    *
-    * @param path
-    */
-  sealed case class WATCH_DIR(path: String)
-
-  /**
     * After creating an actorOf FeyCore send this message to configure.
     */
   case object START
 
   /**
-    * Used by the DirectoryWatcher to notify fey when a new file was added
-    *
-    * @param file java.io.File
+    * Json Receiver actor will send this message everytime a json is received
+    * Does not matter from where it was received
+    * @param json
+    * @param file
     */
-  case class NEW_FILE_ACTION(file: File)
+  case class ORCHESTRATION_RECEIVED(json: JsValue, file: File)
 
   case class STOP_EMPTY_ORCHESTRATION(orchID: String)
 
@@ -396,7 +314,7 @@ protected object FeyCore{
     Props(new FeyCore)
   }
 
-  final val WATCHER_NAME: String = "DIR_WATCHER"
+  final val JSON_RECEIVER_NAME: String = "JSON_RECEIVER"
   final val IDENTIFIER_NAME: String = "FEY_IDENTIFIER"
 
   /**

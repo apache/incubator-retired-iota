@@ -21,7 +21,8 @@ import sbt.Keys._
 object ModuleDependencies {
 
   import Dependencies._
-  val FeyDependencies           = compile(akka_actor,typesafe_config,playJson,slf4j,log4jbind,sprayCan,sprayRouting,jsonValidator,javaFilter)
+  val FeyDependencies           = compile(akka_actor,typesafe_config,playJson,slf4j,log4jbind,sprayCan,
+                                            sprayRouting,jsonValidator,javaFilter,codec,apacheIO)
   val StreamDependencies        = provided(akka_actor, fey)
   val ZMQDependencies           = provided(akka_actor,  fey) ++ compile(zmq)
   val VirtualSensorDependencies = provided(akka_actor,  fey) ++ compile(math3)

@@ -67,16 +67,17 @@ protected object Utils {
     * @param className class path inside the jar
     * @return class of FeyGenericActor
     */
-  def loadActorClassFromJar(path: String, className: String):Class[FeyGenericActor] = {
+  def loadActorClassFromJar(path: String, className: String, jarName: String):Class[FeyGenericActor] = {
 
-    loadedJars.get(path) match {
+    loadedJars.get(jarName) match {
 
       case None =>
         val urls:Array[URL] = Array(new URL(s"jar:file:$path!/"))
         val cl: URLClassLoader = URLClassLoader.newInstance(urls)
         val clazz = cl.loadClass(className)
         val feyClazz = clazz.asInstanceOf[Class[FeyGenericActor]]
-        loadedJars.put(path, (cl, Map(className -> feyClazz)))
+        log.info(s"$path -> $className")
+        loadedJars.put(jarName, (cl, Map(className -> feyClazz)))
         feyClazz
 
       case Some(loadedJar) =>
@@ -84,7 +85,7 @@ protected object Utils {
           case None =>
             val clazz = loadedJar._1.loadClass(className)
             val feyClazz = clazz.asInstanceOf[Class[FeyGenericActor]]
-            loadedJars.put(path, (loadedJar._1, Map(className -> feyClazz) ++ loadedJar._2))
+            loadedJars.put(jarName, (loadedJar._1, Map(className -> feyClazz) ++ loadedJar._2))
             feyClazz
           case Some(clazz) =>
             clazz

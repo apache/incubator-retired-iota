@@ -26,6 +26,8 @@ object Dependencies {
   val fey             = "org.apache.iota"     %% "fey-core"                   % "1.0-SNAPSHOT"
   val zmq             = "org.zeromq"          %  "jeromq"                     % "0.3.5"
   val math3           = "org.apache.commons"  %  "commons-math3"              % "3.2"
+  val codec           = "commons-codec"       % "commons-codec"               % "1.10"
+  val apacheIO        = "commons-io"          % "commons-io"                  % "2.4"
 
   val akka_actor      = "com.typesafe.akka"   %% "akka-actor"                 % "2.4.2"
   val typesafe_config = "com.typesafe"        %  "config"                     % "1.3.0"
@@ -41,4 +43,6 @@ object Dependencies {
   //restapi
   val sprayCan        = "io.spray"            %%  "spray-can"                 % "1.3.3"
   val sprayRouting    = "io.spray"            %%  "spray-routing"             % "1.3.3"
+
+
 }
