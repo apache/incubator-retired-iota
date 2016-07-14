@@ -117,7 +117,7 @@ trait JsonReceiver extends Runnable{
   private final def downloadJAR(url: String, jarName: String): Unit = {
     var outputStream: FileOutputStream = null
     try{
-      val extractedURL = extractCredentials(url)
+      val extractedURL = extractCredentials(s"$url/$jarName")
       log.info(s"Downloading $jarName from ${extractedURL._1}")
 
       val connection = new URL(extractedURL._1).openConnection
