@@ -44,5 +44,8 @@ object Dependencies {
   val sprayCan        = "io.spray"            %%  "spray-can"                 % "1.3.3"
   val sprayRouting    = "io.spray"            %%  "spray-routing"             % "1.3.3"
 
+  //Tests
+  val akka_testkit    = "com.typesafe.akka"   %% "akka-testkit"               % "2.4.2"
+  val scala_test      = "org.scalatest"       %% "scalatest"                   % "3.0.0-RC4"
 
 }
