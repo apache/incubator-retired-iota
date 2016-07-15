@@ -34,18 +34,26 @@ object Application extends App {
 
 }
 
+object FEY_SYSTEM{
+  implicit val system = ActorSystem("FEY-MANAGEMENT-SYSTEM")
+}
+
 object SYSTEM_ACTORS{
 
-  implicit val system = ActorSystem("FEY-MANAGEMENT-SYSTEM")
+  import FEY_SYSTEM._
 
   val fey = system.actorOf(FeyCore.props, name = "FEY-CORE")
   fey ! FeyCore.START
 
   val service = system.actorOf(Props[MyServiceActor], name = "FEY_REST_API")
 
-  val monitoring = system.actorOf(Props[Monitor], "FEY-MONITOR")
-
   implicit val timeout = Timeout(800.seconds)
   IO(Http) ? Http.Bind(SYSTEM_ACTORS.service, interface = "0.0.0.0", port = 16666)
 
+}
+
+object FEY_MONITOR{
+  import FEY_SYSTEM._
+
+  val actorRef = system.actorOf(Props[Monitor], "FEY-MONITOR")
 }

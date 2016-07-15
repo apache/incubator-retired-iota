@@ -51,6 +51,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     */
   @volatile private var scheduler: Cancellable = null
   @volatile private var endBackoff: Long = 0
+  private val monitoring_actor = FEY_MONITOR.actorRef
 
   override final def receive: Receive = {
 
@@ -81,27 +82,27 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     postStop()
   }
 
-  override final def preStart() = {
-    SYSTEM_ACTORS.monitoring  ! Monitor.START(Utils.getTimestamp, startMonitorInfo)
+  override final def preStart(): Unit = {
+    monitoring_actor  ! Monitor.START(Utils.getTimestamp, startMonitorInfo)
     onStart()
     startScheduler()
   }
 
-  override final def postStop() = {
-    SYSTEM_ACTORS.monitoring  ! Monitor.STOP(Utils.getTimestamp, stopMonitorInfo)
+  override final def postStop(): Unit = {
+    monitoring_actor  ! Monitor.STOP(Utils.getTimestamp, stopMonitorInfo)
     log.info(s"STOPPED actor ${self.path.name}")
     stopScheduler()
     onStop()
   }
 
-  override final def postRestart(reason: Throwable) = {
-    SYSTEM_ACTORS.monitoring  ! Monitor.RESTART(reason, Utils.getTimestamp)
+  override final def postRestart(reason: Throwable): Unit = {
+    monitoring_actor  ! Monitor.RESTART(reason, Utils.getTimestamp)
     log.info(s"RESTARTED Actor ${self.path.name}")
     preStart()
     onRestart(reason)
   }
 
-  def onRestart(reason: Throwable) = {
+  def onRestart(reason: Throwable): Unit = {
     log.info("RESTARTED method")
   }
 
@@ -118,7 +119,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * Enables the backoff.
     * Actor will drop the PROCESS messages that are sent during the backoff period time.
     */
-  final def startBackoff() = {
+  final def startBackoff(): Unit = {
     this.endBackoff = System.nanoTime() + this.backoff.toNanos
   }
 
@@ -141,7 +142,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
   /**
     * Called by the scheduler.
     */
-  def execute() = {
+  def execute(): Unit = {
     log.info(s"Executing action in ${self.path.name}")
   }
 
@@ -166,7 +167,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * @param message message to be propagated
     * @tparam T Any
     */
-  final def propagateMessage[T](message: T) = {
+  final def propagateMessage[T](message: T): Unit = {
     connectTo.foreach(linkedActor => {
       linkedActor._2 ! PROCESS(message)
     })

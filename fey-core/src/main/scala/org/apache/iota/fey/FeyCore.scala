@@ -38,6 +38,8 @@ protected class FeyCore extends Actor with ActorLogging{
   import FeyCore._
   import CONFIG._
 
+  val monitoring_actor = FEY_MONITOR.actorRef
+
   val identifier: ActorRef = context.actorOf(Props(classOf[IdentifyFeyActors]), name = IDENTIFIER_NAME)
   context.watch(identifier)
 
@@ -75,7 +77,7 @@ protected class FeyCore extends Actor with ActorLogging{
   }
 
   private def processTerminatedMessage(actorRef: ActorRef) = {
-    SYSTEM_ACTORS.monitoring ! Monitor.TERMINATE(actorRef.path.toString, Utils.getTimestamp)
+    monitoring_actor ! Monitor.TERMINATE(actorRef.path.toString, Utils.getTimestamp)
     log.info(s"TERMINATED ${actorRef.path.name}")
     FEY_CACHE.activeOrchestrations.remove(actorRef.path.name)
     if(!FEY_CACHE.orchestrationsAwaitingTermination.isEmpty) {
@@ -87,19 +89,19 @@ protected class FeyCore extends Actor with ActorLogging{
     * Clean up Fey Cache
     */
   override def postStop(): Unit = {
-    SYSTEM_ACTORS.monitoring ! Monitor.STOP(Utils.getTimestamp)
+    monitoring_actor ! Monitor.STOP(Utils.getTimestamp)
     FEY_CACHE.activeOrchestrations.clear()
     FEY_CACHE.orchestrationsAwaitingTermination.clear()
     ORCHESTRATION_CACHE.orchestration_metadata.clear()
   }
 
   override def preStart(): Unit = {
-    SYSTEM_ACTORS.monitoring ! Monitor.START(Utils.getTimestamp)
+    monitoring_actor ! Monitor.START(Utils.getTimestamp)
     log.info("Starting Fey Core")
   }
 
   override def postRestart(reason: Throwable): Unit = {
-    SYSTEM_ACTORS.monitoring ! Monitor.RESTART(reason, Utils.getTimestamp)
+    monitoring_actor ! Monitor.RESTART(reason, Utils.getTimestamp)
     preStart()
     self ! START
   }

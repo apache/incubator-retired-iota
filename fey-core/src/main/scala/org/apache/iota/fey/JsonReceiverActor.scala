@@ -28,6 +28,7 @@ class JsonReceiverActor extends Actor with ActorLogging {
 
   import JsonReceiverActor._
 
+  val monitoring_actor = FEY_MONITOR.actorRef
   val watchFileTask = new WatchServiceReceiver(self)
   var watchThread = new Thread(watchFileTask, "WatchService")
 
@@ -35,7 +36,7 @@ class JsonReceiverActor extends Actor with ActorLogging {
     prepareDynamicJarRepo()
     processCheckpointFiles()
 
-    SYSTEM_ACTORS.monitoring  ! Monitor.START(Utils.getTimestamp)
+    monitoring_actor  ! Monitor.START(Utils.getTimestamp)
     watchThread.setDaemon(true)
     watchThread.start()
 
@@ -60,13 +61,13 @@ class JsonReceiverActor extends Actor with ActorLogging {
   }
 
   override def postStop() {
-    SYSTEM_ACTORS.monitoring  ! Monitor.STOP(Utils.getTimestamp)
+    monitoring_actor  ! Monitor.STOP(Utils.getTimestamp)
     watchThread.interrupt()
     watchThread.join()
   }
 
   override def postRestart(reason: Throwable): Unit = {
-    SYSTEM_ACTORS.monitoring  ! Monitor.RESTART(reason, Utils.getTimestamp)
+    monitoring_actor  ! Monitor.RESTART(reason, Utils.getTimestamp)
     preStart()
   }
 
