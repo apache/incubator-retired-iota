@@ -96,14 +96,12 @@ protected class FeyCore extends Actor with ActorLogging{
   override def preStart(): Unit = {
     SYSTEM_ACTORS.monitoring ! Monitor.START(Utils.getTimestamp)
     log.info("Starting Fey Core")
-    self ! START
   }
-
-
 
   override def postRestart(reason: Throwable): Unit = {
     SYSTEM_ACTORS.monitoring ! Monitor.RESTART(reason, Utils.getTimestamp)
     preStart()
+    self ! START
   }
 
   override val supervisorStrategy =

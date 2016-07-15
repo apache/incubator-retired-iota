@@ -97,9 +97,11 @@ class WatchServiceReceiver(receiverActor: ActorRef) extends JsonReceiver{
   }
 
   override def exceptionOnRun(e: Exception): Unit = {
-    log.error("Watch Service stopped", e)
+    e match {
+      case e: InterruptedException =>
+      case e: Exception => log.error("Watch Service stopped", e)
+    }
     watchService.close()
-    throw e
   }
 
 }
