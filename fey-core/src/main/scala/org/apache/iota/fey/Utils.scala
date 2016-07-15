@@ -293,6 +293,10 @@ object CONFIG{
   }
 }
 
+object GLOBAL_DEFINITIONS {
+  val WATCH_SERVICE_THREAD = "FeyWatchService"
+}
+
 
 
 case class NetworkAlreadyDefined(message:String)  extends Exception(message)

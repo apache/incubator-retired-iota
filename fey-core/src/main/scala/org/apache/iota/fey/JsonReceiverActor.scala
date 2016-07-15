@@ -30,7 +30,7 @@ class JsonReceiverActor extends Actor with ActorLogging {
 
   val monitoring_actor = FEY_MONITOR.actorRef
   val watchFileTask = new WatchServiceReceiver(self)
-  var watchThread = new Thread(watchFileTask, "WatchService")
+  var watchThread = new Thread(watchFileTask, GLOBAL_DEFINITIONS.WATCH_SERVICE_THREAD)
 
   override def preStart() {
     prepareDynamicJarRepo()
