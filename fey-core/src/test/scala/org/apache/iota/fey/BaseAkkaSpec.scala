@@ -21,7 +21,7 @@ package org.apache.iota.fey
 import java.io.File
 import java.nio.file.Paths
 
-import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify}
+import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify, Props}
 import akka.testkit.{EventFilter, TestActorRef, TestEvent, TestProbe}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
@@ -45,6 +45,9 @@ class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
   system.eventStream.publish(TestEvent.Mute(EventFilter.info()))
   system.eventStream.publish(TestEvent.Mute(EventFilter.warning()))
   system.eventStream.publish(TestEvent.Mute(EventFilter.error()))
+
+  val globalIdentifierName = "GLOBAL-IDENTIFIER"
+  val globalIdentifierRef = system.actorOf(Props[IdentifyFeyActors],globalIdentifierName)
 
   override protected def afterAll(): Unit = {
     Await.ready(system.terminate(), 20.seconds)

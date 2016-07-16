@@ -22,16 +22,14 @@ import akka.actor.{ActorRef, Props}
 
 class IdentifyFeyActorsSpec extends BaseAkkaSpec {
 
-  val identifyRef = system.actorOf(Props[IdentifyFeyActors],"IDENTIFIER")
-
   "Sending IdentifyFeyActors.IDENTIFY_TREE to IdentifyFeyActors" should {
     s"result in one path added to IdentifyFeyActors.actorsPath" in {
-      identifyRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
+      globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
       Thread.sleep(1000)
       IdentifyFeyActors.actorsPath.size should equal(1)
     }
-    s"result in path 'akka://FEY-TEST/user/IDENTIFIER' " in {
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/user/IDENTIFIER")
+    s"result in path 'akka://FEY-TEST/user/$globalIdentifierName' " in {
+      IdentifyFeyActors.actorsPath should contain(s"akka://FEY-TEST/user/$globalIdentifierName")
     }
   }
 
@@ -40,24 +38,24 @@ class IdentifyFeyActorsSpec extends BaseAkkaSpec {
   "Creating a new actor in the system and sending IdentifyFeyActors.IDENTIFY_TREE to IdentifyFeyActors" should {
     s"result in two paths added to IdentifyFeyActors.actorsPath" in {
       actor2 = system.actorOf(Props[Monitor],"MONITOR")
-      identifyRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
+      globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
       Thread.sleep(1000)
       IdentifyFeyActors.actorsPath.size should equal(2)
     }
     s"result in matching paths" in {
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/user/IDENTIFIER")
+      IdentifyFeyActors.actorsPath should contain(s"akka://FEY-TEST/user/$globalIdentifierName")
       IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/user/MONITOR")
     }
   }
 
-  "Stopping precious added actor and sending IdentifyFeyActors.IDENTIFY_TREE to IdentifyFeyActors" should {
+  "Stopping previous added actor and sending IdentifyFeyActors.IDENTIFY_TREE to IdentifyFeyActors" should {
     "result in going back to have just one path added to IdentifyFeyActors.actorsPath" in {
-      identifyRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
+      globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
       Thread.sleep(1000)
       IdentifyFeyActors.actorsPath.size should equal(2)
     }
-    s"result in path 'akka://FEY-TEST/user/IDENTIFIER' " in {
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/user/IDENTIFIER")
+    s"result in path 'akka://FEY-TEST/user/$globalIdentifierName' " in {
+      IdentifyFeyActors.actorsPath should contain(s"akka://FEY-TEST/user/$globalIdentifierName")
     }
   }
 }
