@@ -24,6 +24,7 @@ import java.nio.file.Paths
 import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify}
 import akka.testkit.{EventFilter, TestActorRef, TestEvent, TestProbe}
 import akka.util.Timeout
+import com.typesafe.config.ConfigFactory
 import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 import play.api.libs.json._
@@ -38,7 +39,7 @@ class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
   CONFIG.loadUserConfiguration(Paths.get(conf.toURI()).toFile().getAbsolutePath)
   copyTestActorToTmp()
 
-  implicit val system = ActorSystem()
+  implicit val system = ActorSystem("FEY-TEST", ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]"""))
   system.eventStream.publish(TestEvent.Mute(EventFilter.debug()))
   system.eventStream.publish(TestEvent.Mute(EventFilter.info()))
   system.eventStream.publish(TestEvent.Mute(EventFilter.warning()))

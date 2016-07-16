@@ -147,5 +147,41 @@ object Utils_JSONTest {
        "ensembles" : []
      }"""
 
+  val recreate_timestamp_json_test =
+    """{
+       "guid" : "TEST-ACTOR",
+       "command" : "RECREATE",
+       "timestamp": "213263914979",
+       "name" : "ORCHESTRATION FOR TEST",
+       "ensembles" : [
+         {
+           "guid":"MY-ENSEMBLE-0001",
+           "command": "DELETE",
+           "performers":[
+             {
+               "guid": "TEST-0001",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             },
+             {
+                "guid": "TEST-0002",
+                "schedule": 0,
+                "backoff": 0,
+                "source": {
+                  "name": "fey-test-actor.jar",
+                  "classPath": "org.apache.iota.fey.TestActor",
+                  "parameters": {}
+                }
+              }
+           ],
+           "connections":[]
+         }
+       ]
+     }"""
 
 }

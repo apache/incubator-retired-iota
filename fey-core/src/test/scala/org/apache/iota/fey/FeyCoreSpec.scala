@@ -21,9 +21,9 @@ package org.apache.iota.fey
 import java.io.File
 
 import akka.actor.{ActorRef, PoisonPill, Props}
-import akka.testkit.{EventFilter, TestActorRef, TestProbe}
+import akka.testkit.{EventFilter, TestProbe}
 
-import scala.concurrent.duration.{DurationInt, FiniteDuration}
+import scala.concurrent.duration.DurationInt
 
 class FeyCoreSpec extends BaseAkkaSpec  {
 
@@ -59,9 +59,9 @@ class FeyCoreSpec extends BaseAkkaSpec  {
   var ensemble2Test1ref:ActorRef = _
   var orchestrationref:ActorRef = _
 
+  val orchestration_name = "TEST-ACTOR"
 
   "Sending FeyCore.ORCHESTRATION_RECEIVED with CREATE command to FeyCore" should {
-    val orchestration_name = "TEST-ACTOR"
     feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.create_json_test), new File("/tmp/fey/test/json"))
     s"result in creating an Orchestration child actor with the name '$orchestration_name'" in {
       orchestrationref = TestProbe().expectActor(s"$feyPath/$orchestration_name")
@@ -84,7 +84,6 @@ class FeyCoreSpec extends BaseAkkaSpec  {
   }
 
   "Sending FeyCore.ORCHESTRATION_RECEIVED with UPDATE command to FeyCore" should {
-    val orchestration_name = "TEST-ACTOR"
     s"result in creating a new Performer child actor with the name '$orchestration_name/MY-ENSEMBLE-0001/TEST-0002'" in {
       feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.update_json_test), new File("/tmp/fey/test/json"))
       ensemble1Test2ref = TestProbe().expectActor(s"$feyPath/$orchestration_name/MY-ENSEMBLE-0001/TEST-0002")
@@ -92,7 +91,6 @@ class FeyCoreSpec extends BaseAkkaSpec  {
   }
 
   "Sending FeyCore.ORCHESTRATION_RECEIVED with UPDATE command and DELETE ensemble to FeyCore" should {
-    val orchestration_name = "TEST-ACTOR"
     s"result in termination of Ensemble with the name '$orchestration_name/MY-ENSEMBLE-0001'" in {
       feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.update_delete_json_test), new File("/tmp/fey/test/json"))
       TestProbe().verifyActorTermination(ensemble1ref)
@@ -105,8 +103,23 @@ class FeyCoreSpec extends BaseAkkaSpec  {
     }
   }
 
+  "Sending FeyCore.ORCHESTRATION_RECEIVED with RECREATE command and same Timestamp to FeyCore" should {
+    s"result in logging a 'not recreated' message at Warn " in {
+      EventFilter.warning(pattern = s".*$orchestration_name not recreated.*", occurrences = 1) intercept {
+        feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.recreate_timestamp_json_test), new File("/tmp/fey/test/json"))
+      }
+    }
+  }
+
+  "Sending FeyCore.JSON_TREE to FeyCore" should {
+    s"result in logging a 6 path messages at Info " in {
+      EventFilter.info(pattern = s"^akka://.*/user/.*", occurrences = 6) intercept {
+        feyCoreRef ! FeyCore.JSON_TREE
+      }
+    }
+  }
+
   "Sending FeyCore.ORCHESTRATION_RECEIVED with DELETE command to FeyCore" should {
-    val orchestration_name = "TEST-ACTOR"
     s"result in termination of Orchestration with the name '$orchestration_name'" in {
       feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.delete_json_test), new File("/tmp/fey/test/json"))
       TestProbe().verifyActorTermination(orchestrationref)
@@ -119,6 +132,9 @@ class FeyCoreSpec extends BaseAkkaSpec  {
     }
     s"result in termination of Performer with the name '$orchestration_name/MY-ENSEMBLE-0002/TEST-0001'" in {
       TestProbe().notExpectActor(ensemble2Test1ref.path.toString)
+    }
+    s"result in removing key '$orchestration_name' at FEY_CACHE.activeOrchestrations" in {
+      FEY_CACHE.activeOrchestrations should not contain key(orchestration_name)
     }
   }
 
