@@ -39,7 +39,8 @@ class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
   CONFIG.loadUserConfiguration(Paths.get(conf.toURI()).toFile().getAbsolutePath)
   copyTestActorToTmp()
 
-  implicit val system = ActorSystem("FEY-TEST", ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]"""))
+  val systemName = "FEY-TEST"
+  implicit val system = ActorSystem(systemName, ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]"""))
   system.eventStream.publish(TestEvent.Mute(EventFilter.debug()))
   system.eventStream.publish(TestEvent.Mute(EventFilter.info()))
   system.eventStream.publish(TestEvent.Mute(EventFilter.warning()))

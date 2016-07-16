@@ -27,7 +27,7 @@ protected class IdentifyFeyActors extends Actor with ActorLogging {
 
   import IdentifyFeyActors._
 
-  def receive = {
+  override def receive: Receive = {
     case IDENTIFY_TREE(startPath) =>
       log.info("Current Actors in system:")
       actorsPath = HashSet.empty
