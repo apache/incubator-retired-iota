@@ -184,4 +184,87 @@ object Utils_JSONTest {
        ]
      }"""
 
+  val orchestration_test_json =
+    """{
+       "guid" : "TEST-ORCH-2",
+       "command" : "CREATE",
+       "timestamp": "213263914979",
+       "name" : "ORCHESTRATION FOR TEST",
+       "ensembles" : [
+         {
+           "guid":"MY-ENSEMBLE-0001",
+           "command": "NONE",
+           "performers":[
+             {
+               "guid": "TEST-0001",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             }
+           ],
+           "connections":[]
+         }
+       ]
+     }"""
+
+  val orchestration_update_test_json =
+    """{
+       "ensembles" : [
+         {
+           "guid":"MY-ENSEMBLE-0001",
+           "command": "UPDATE",
+           "performers":[
+             {
+               "guid": "TEST-0004",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             },
+             {
+               "guid": "TEST-0005",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             }
+           ],
+           "connections":[]
+         }
+       ]
+     }"""
+
+  val orchestration_update2_test_json =
+    """{
+       "ensembles" : [
+         {
+           "guid":"MY-ENSEMBLE-0005",
+           "command": "UPDATE",
+           "performers":[
+             {
+               "guid": "TEST-0004",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             }
+           ],
+           "connections":[]
+         }
+       ]
+     }"""
+
 }

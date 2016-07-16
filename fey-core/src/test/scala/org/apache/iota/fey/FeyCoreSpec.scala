@@ -144,4 +144,8 @@ class FeyCoreSpec extends BaseAkkaSpec  {
       monitor.expectMsgClass(1.seconds, classOf[Monitor.STOP])
     }
   }
+
+  //TODO: Test STOP_EMPTY_ORCHESTRATION
+  //TODO: Test restart
+  //TODO: Test checkpoint
 }

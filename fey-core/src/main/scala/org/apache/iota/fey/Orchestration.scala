@@ -37,7 +37,7 @@ protected class Orchestration(val name: String,
     */
   private val ensembles:HashMap[String, ActorRef] = HashMap.empty[String, ActorRef]
   private val awaitingTermination:HashMap[String, JsObject] = HashMap.empty[String, JsObject]
-  private val monitoring_actor = FEY_MONITOR.actorRef
+  val monitoring_actor = FEY_MONITOR.actorRef
 
   override def receive: Receive = {
 
@@ -55,7 +55,7 @@ protected class Orchestration(val name: String,
       log.warning(s"ACTOR DEAD ${actor.path}")
       ensembles.remove(actor.path.name)
       checkForEnsemblesWaitingTermination(actor.path.name)
-      stopIfNoOrchestrationisRunning()
+      stopIfNoEnsembleIsRunning()
 
     case GetRoutees => //Discard
 
@@ -87,10 +87,10 @@ protected class Orchestration(val name: String,
   }
 
   /**
-    * This method is called everytime the orchestration receives a terminated message.
+    * This method is called every time the orchestration receives a terminated message.
     * It will check if there is no more Ensembles running and will delete the orchestration
    */
-  private def stopIfNoOrchestrationisRunning() = {
+  private def stopIfNoEnsembleIsRunning() = {
     if (ensembles.isEmpty){
       context.parent ! STOP_EMPTY_ORCHESTRATION(guid)
     }

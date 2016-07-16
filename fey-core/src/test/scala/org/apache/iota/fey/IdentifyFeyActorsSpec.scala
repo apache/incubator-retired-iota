@@ -29,7 +29,7 @@ class IdentifyFeyActorsSpec extends BaseAkkaSpec {
       IdentifyFeyActors.actorsPath.size should equal(1)
     }
     s"result in path 'akka://FEY-TEST/user/$globalIdentifierName' " in {
-      IdentifyFeyActors.actorsPath should contain(s"akka://FEY-TEST/user/$globalIdentifierName")
+      IdentifyFeyActors.actorsPath should contain(s"akka://$systemName/user/$globalIdentifierName")
     }
   }
 
@@ -43,8 +43,8 @@ class IdentifyFeyActorsSpec extends BaseAkkaSpec {
       IdentifyFeyActors.actorsPath.size should equal(2)
     }
     s"result in matching paths" in {
-      IdentifyFeyActors.actorsPath should contain(s"akka://FEY-TEST/user/$globalIdentifierName")
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/user/MONITOR")
+      IdentifyFeyActors.actorsPath should contain(s"akka://$systemName/user/$globalIdentifierName")
+      IdentifyFeyActors.actorsPath should contain(s"akka://$systemName/user/MONITOR")
     }
   }
 
