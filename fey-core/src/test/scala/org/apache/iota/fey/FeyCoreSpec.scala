@@ -138,6 +138,23 @@ class FeyCoreSpec extends BaseAkkaSpec  {
     }
   }
 
+  "Sending FeyCore.STOP_EMPTY_ORCHESTRATION to FeyCore" should {
+    s"result in termination of 'TEST-ORCH-2'" in {
+      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.orchestration_test_json), new File("/tmp/fey/test/json"))
+      val ref = TestProbe().expectActor(s"$feyPath/TEST-ORCH-2")
+      FEY_CACHE.activeOrchestrations should have size(1)
+      FEY_CACHE.activeOrchestrations should contain key("TEST-ORCH-2")
+      feyCoreRef ! FeyCore.STOP_EMPTY_ORCHESTRATION("TEST-ORCH-2")
+      TestProbe().verifyActorTermination(ref)
+    }
+    s"result in sending Terminate message to Monitor actor" in{
+      monitor.expectMsgClass(1.seconds, classOf[Monitor.TERMINATE])
+    }
+    s"result in empty FEY_CACHE.activeOrchestrations" in {
+      FEY_CACHE.activeOrchestrations shouldBe empty
+    }
+  }
+
   "Stopping FeyCore" should {
     "result in sending STOP message to Monitor actor" in {
       feyCoreRef ! PoisonPill
@@ -145,7 +162,6 @@ class FeyCoreSpec extends BaseAkkaSpec  {
     }
   }
 
-  //TODO: Test STOP_EMPTY_ORCHESTRATION
   //TODO: Test restart
   //TODO: Test checkpoint
 }

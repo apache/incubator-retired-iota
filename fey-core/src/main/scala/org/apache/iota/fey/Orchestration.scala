@@ -35,8 +35,8 @@ protected class Orchestration(val name: String,
   /**
     * List of map of Ensembles = [EnsembleID, Ensemble]
     */
-  private val ensembles:HashMap[String, ActorRef] = HashMap.empty[String, ActorRef]
-  private val awaitingTermination:HashMap[String, JsObject] = HashMap.empty[String, JsObject]
+  val ensembles:HashMap[String, ActorRef] = HashMap.empty[String, ActorRef]
+  val awaitingTermination:HashMap[String, JsObject] = HashMap.empty[String, JsObject]
   val monitoring_actor = FEY_MONITOR.actorRef
 
   override def receive: Receive = {
