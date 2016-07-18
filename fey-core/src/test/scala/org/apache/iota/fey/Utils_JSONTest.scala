@@ -267,4 +267,60 @@ object Utils_JSONTest {
        ]
      }"""
 
+  val simple_ensemble_test_json =
+    """
+     {
+       "guid":"MY-ENSEMBLE-0005",
+       "command": "UPDATE",
+       "performers":[
+         {
+           "guid": "TEST-0004",
+           "schedule": 0,
+           "backoff": 0,
+           "source": {
+             "name": "fey-test-actor.jar",
+             "classPath": "org.apache.iota.fey.TestActor",
+             "parameters": {}
+           }
+         }
+       ],
+       "connections":[]
+     }
+    """
+
+  val ensemble_test_json =
+    """
+     {
+       "guid":"MY-ENSEMBLE-0005",
+       "command": "NONE",
+       "performers":[
+         {
+           "guid": "PERFORMER-SCHEDULER",
+           "schedule": 200,
+           "backoff": 0,
+           "source": {
+             "name": "fey-test-actor.jar",
+             "classPath": "org.apache.iota.fey.TestActor",
+             "parameters": {}
+           }
+         },
+          {
+           "guid": "PERFORMER-PARAMS",
+           "schedule": 0,
+           "backoff": 0,
+           "source": {
+             "name": "fey-test-actor.jar",
+             "classPath": "org.apache.iota.fey.TestActor",
+             "parameters": {
+               "param-1" : "test",
+               "param-2" : "test2"
+             }
+           }
+         }
+       ],
+       "connections":[
+        {"PERFORMER-SCHEDULER":["PERFORMER-PARAMS"]}
+       ]
+     }
+    """
 }
