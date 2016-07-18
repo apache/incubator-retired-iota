@@ -91,10 +91,10 @@ class EnsembleSpec extends BaseAkkaSpec{
         TestProbe().verifyActorTermination(simplePerformerRef)
       }
     }
-    //s"result in Performer 'TEST-0004' restarted" in {
-    //  val newPerformer = TestProbe().expectActor(s"${parent.ref.path}/${(ensembleJson \ JSON_PATH.GUID).as[String]}/TEST-0004")
-    //  newPerformer.compareTo(simplePerformerRef) should be(0)
-    //}
+    s"result in Performer 'TEST-0004' restarted" in {
+      val newPerformer = TestProbe().expectActor(s"${parent.ref.path}/${(ensembleJson \ JSON_PATH.GUID).as[String]}/TEST-0004")
+      newPerformer.compareTo(simplePerformerRef) should not be(0)
+    }
     "result in two paths added to IdentifyFeyActors.actorsPath" in{
       globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(parent.ref.path.toString)
       Thread.sleep(500)
@@ -205,17 +205,108 @@ class EnsembleSpec extends BaseAkkaSpec{
       EventFilter[RestartEnsemble](occurrences = 1) intercept {
         paramsRef ! PoisonPill
         TestProbe().verifyActorTermination(paramsRef)
+        generalScheduleTB.expectMsg(s"Stopped ${scheduleRef.path.name}")
+        generalParamsTB.expectMsg(s"Stopped ${paramsRef.path.name}")
       }
     }
     s"result in sending STOP - RESTART to monitor actor" in {
       monitor.expectMsgClass(classOf[Monitor.STOP])
       monitor.expectMsgClass(classOf[Monitor.RESTART])
+      monitor.expectMsgClass(classOf[Monitor.START])
     }
-    //"keep actorRef when restarted" in {
-    //  TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}").compareTo(advEnsembleRef) should be(0)
-    //  TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-SCHEDULER").compareTo(scheduleRef) should be(0)
-    //  TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-PARAMS").compareTo(paramsRef) should be(0)
-    //}
+    "keep ensemble actorRef when restarted" in {
+      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}").compareTo(advEnsembleRef) should be(0)
+    }
+    "stop and start the performer with a new reference" in{
+      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-SCHEDULER").compareTo(scheduleRef) should not be(0)
+      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-PARAMS").compareTo(paramsRef) should not be(0)
+      scheduleRef = TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-SCHEDULER")
+      paramsRef = TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-PARAMS")
+    }
+  }
+
+  "Restarting an Ensemble" should{
+    "Consuming left messages on Process" in{
+      processParamsTB.receiveWhile(1200.milliseconds) {
+        case msg: String =>
+      }
+    }
+    "Cleanup TestProbs" in {
+      schedulerScheduleTB.expectNoMsg(400.milliseconds)
+      processParamsTB.expectNoMsg(400.milliseconds)
+    }
+  }
+
+  "Redefining TestProbe for performers" should {
+    "start receiving messages" in {
+      scheduleRef ! ((schedulerScheduleTB.ref, system.deadLetters, generalScheduleTB.ref))
+      paramsRef ! ((system.deadLetters, processParamsTB.ref, generalParamsTB.ref))
+      schedulerScheduleTB.expectMsg("EXECUTE")
+      Thread.sleep(100)
+      schedulerScheduleTB.receiveN(5, 1.seconds)
+      processParamsTB.receiveN(5, 1.seconds)
+    }
+  }
+
+  s"Sending PoisonPill to detailed Ensemble" should {
+    s"result in termination of Ensemble" in{
+      advEnsembleRef ! PoisonPill
+      TestProbe().verifyActorTermination(advEnsembleRef)
+    }
+    "result in empty IdentifyFeyActors.actorsPath" in{
+      globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(parent.ref.path.toString)
+      Thread.sleep(500)
+      IdentifyFeyActors.actorsPath shouldBe empty
+    }
+  }
+
+  val backEnsembleJson = getJSValueFromString(Utils_JSONTest.ensemble_backoff_test_json)
+  var backEnsembleRef:TestActorRef[Ensemble] = _
+  var backEnsembleState: Ensemble = ensembleRef.underlyingActor
+  var backParamsRef: ActorRef = _
+  var backScheduleRef: ActorRef = _
+  val backprocessParamsTB = TestProbe("BACKOFF")
+
+  s"creating Ensemble with Backoff performer" should {
+    s"result in creation of Ensemble actor " in {
+      backEnsembleRef = TestActorRef[Ensemble]( Props(new Ensemble(orchestrationID,"ORCH-NAME", backEnsembleJson.as[JsObject]){
+        override val monitoring_actor = monitor.ref
+      }), parent.ref, (backEnsembleJson \ JSON_PATH.GUID).as[String])
+      backEnsembleState = backEnsembleRef.underlyingActor
+      TestProbe().expectActor(s"${parent.ref.path}/${(backEnsembleJson \ JSON_PATH.GUID).as[String]}")
+    }
+    s"result in creation of Performer 'PERFORMER-SCHEDULER'" in{
+      backScheduleRef = TestProbe().expectActor(s"${parent.ref.path}/${(backEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-SCHEDULER")
+    }
+    s"result in creation of Performer 'PERFORMER-PARAMS'" in{
+      backParamsRef = TestProbe().expectActor(s"${parent.ref.path}/${(backEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-PARAMS")
+    }
+    s"create 'PERFORMER-PARAMS' with backoff time equal to 1 second" in{
+      backEnsembleState.performers_metadata.get("PERFORMER-PARAMS").get.backoff should  equal(1000.millisecond)
+    }
+    s"create 'PERFORMER-SCHEDUKE' with autoScale equal to true" in{
+      backEnsembleState.performers_metadata.get("PERFORMER-SCHEDULER").get.autoScale should  equal(2)
+    }
+  }
+  s"Performer with backoff enabled" should {
+   "not process messages during the backoff period" in{
+     backScheduleRef ! ((schedulerScheduleTB.ref, system.deadLetters, generalScheduleTB.ref))
+     backParamsRef ! ((system.deadLetters, backprocessParamsTB.ref, generalParamsTB.ref))
+     backprocessParamsTB.expectMsg("PROCESS - EXECUTE - akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$a")
+     backprocessParamsTB.expectNoMsg(1000.milliseconds)
+   }
+  }
+
+  s"Performer with autoScale" should {
+    "result in router and routees created" in {
+      globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(parent.ref.path.toString)
+      Thread.sleep(500)
+      IdentifyFeyActors.actorsPath should have size(4)
+      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005")
+      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-PARAMS")
+      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER")
+      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$a")
+    }
   }
 
 }

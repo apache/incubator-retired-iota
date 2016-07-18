@@ -118,11 +118,6 @@ class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
     Json.parse(json)
   }
 
-  def getActorRefFromPath(path: String, timeout: Timeout = 2.seconds): ActorRef = {
-    Await.result(
-      system.actorSelection("akka.tcp://REMOTE@192.168.0.136:2552/user/Testing")
-        .resolveOne()(timeout), 5.seconds)
-  }
 }
 
 
