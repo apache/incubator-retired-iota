@@ -27,9 +27,9 @@ import scala.collection.mutable.ArrayBuffer
  */
 case class TrieNode(path: String, children: ArrayBuffer[TrieNode], events:ArrayBuffer[Monitor.MonitorEvent])
 
-class Trie{
+protected class Trie(systemName: String){
 
-  private val root: TrieNode = TrieNode("FEY-MANAGEMENT-SYSTEM", ArrayBuffer.empty, ArrayBuffer.empty)
+  private val root: TrieNode = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty)
   var elements: Int = 0
 
   def append(path: String, event: Monitor.MonitorEvent = null): Unit = {
@@ -49,6 +49,53 @@ class Trie{
       }
       append(path, nextRoot(0),index+1, event)
     }
+  }
+
+  def hasPath(path: String): Boolean = {
+    recHasPath(root, path.replaceFirst("akka://","").split("/"),1)
+  }
+
+  @tailrec private def recHasPath(root: TrieNode, path: Array[String], index: Int): Boolean = {
+    if(root != null && index < path.length) {
+      var nextRoot = root.children.filter(child => child.path == path(index))
+      if(nextRoot.isEmpty){
+        false
+      }else{
+        recHasPath(nextRoot(0), path, index + 1)
+      }
+    }else{
+      true
+    }
+  }
+
+  def getNode(path: String): Option[TrieNode] = {
+    recGetNode(root, path.replaceFirst("akka://","").split("/"),1)
+  }
+
+  @tailrec private def recGetNode(root: TrieNode, path: Array[String], index: Int): Option[TrieNode]= {
+    if(root != null && index < path.length) {
+      var nextRoot = root.children.filter(child => child.path == path(index))
+      if(nextRoot.isEmpty){
+        None
+      }else{
+        if(path.length - 1 == index){
+            Some(nextRoot(0))
+        }else {
+          recGetNode(nextRoot(0), path, index + 1)
+        }
+      }
+    }else{
+      None
+    }
+  }
+
+  def removeAllNodes(): Unit = {
+    var index = 0
+    while(index < root.children.length){
+      root.children.remove(index)
+      index += 1
+    }
+    elements = 0
   }
 
   def print:JsValue = {

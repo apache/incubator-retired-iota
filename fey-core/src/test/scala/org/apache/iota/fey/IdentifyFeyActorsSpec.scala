@@ -22,6 +22,8 @@ import akka.actor.{ActorRef, Props}
 
 class IdentifyFeyActorsSpec extends BaseAkkaSpec {
 
+  val aux_events = new Trie(systemName)
+
   "Sending IdentifyFeyActors.IDENTIFY_TREE to IdentifyFeyActors" should {
     s"result in one path added to IdentifyFeyActors.actorsPath" in {
       globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
@@ -37,7 +39,7 @@ class IdentifyFeyActorsSpec extends BaseAkkaSpec {
 
   "Creating a new actor in the system and sending IdentifyFeyActors.IDENTIFY_TREE to IdentifyFeyActors" should {
     s"result in two paths added to IdentifyFeyActors.actorsPath" in {
-      actor2 = system.actorOf(Props[Monitor],"MONITOR")
+      actor2 = system.actorOf(Props(new Monitor(aux_events)),"MONITOR")
       globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(s"akka://$systemName/user")
       Thread.sleep(1000)
       IdentifyFeyActors.actorsPath.size should equal(2)

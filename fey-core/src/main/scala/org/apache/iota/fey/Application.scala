@@ -55,5 +55,5 @@ object SYSTEM_ACTORS{
 object FEY_MONITOR{
   import FEY_SYSTEM._
 
-  val actorRef = system.actorOf(Props[Monitor], "FEY-MONITOR")
+  val actorRef = system.actorOf(Props(new Monitor(Monitor.events)), "FEY-MONITOR")
 }

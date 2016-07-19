@@ -25,35 +25,34 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by barbaragomes on 7/8/16.
   */
-protected class Monitor extends Actor {
+protected class Monitor(eventsStore: Trie) extends Actor {
 
   import Monitor._
 
   val log: DiagnosticLoggingAdapter = Logging(this)
   log.mdc(Map("fileName" -> "monitor_events"))
 
-  override def postStop() = {
+  override def postStop(): Unit = {
     log.clearMDC()
   }
-
 
   override def receive: Receive = {
 
     case START(timestamp, info) =>
       logInfo(sender().path.toString, EVENTS.START, timestamp, info)
-      events.append(sender().path.toString,MonitorEvent(EVENTS.START, timestamp, info))
+      eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.START, timestamp, info))
 
     case STOP(timestamp, info) =>
       logInfo(sender().path.toString, EVENTS.STOP, timestamp, info)
-      events.append(sender().path.toString,MonitorEvent(EVENTS.STOP, timestamp, info))
+      eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.STOP, timestamp, info))
 
     case RESTART(reason, timestamp) =>
       logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
-      events.append(sender().path.toString,MonitorEvent(EVENTS.RESTART, timestamp, reason.getMessage))
+      eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.RESTART, timestamp, reason.getMessage))
 
     case TERMINATE(actorPath, timestamp, info) =>
-      logInfo(sender().path.toString, EVENTS.TERMINATE, timestamp, info)
-      events.append(actorPath,MonitorEvent(EVENTS.TERMINATE, timestamp, info))
+      logInfo(actorPath, EVENTS.TERMINATE, timestamp, info)
+      eventsStore.append(actorPath,MonitorEvent(EVENTS.TERMINATE, timestamp, info))
 
   }
 
@@ -80,7 +79,7 @@ protected object Monitor{
   /**
     * Contains the lifecycle events for actors in Fey
     */
-  val events: Trie = new Trie()
+  val events: Trie = new Trie("FEY-MANAGEMENT-SYSTEM")
 
   //Static HTML content from d3
   val html = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/eventsTable.html"), "UTF-8")
