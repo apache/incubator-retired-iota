@@ -125,7 +125,7 @@ class EnsembleSpec extends BaseAkkaSpec{
 
   val advEnsembleJson = getJSValueFromString(Utils_JSONTest.ensemble_test_json)
   var advEnsembleRef:TestActorRef[Ensemble] = _
-  var advEnsembleState: Ensemble = ensembleRef.underlyingActor
+  var advEnsembleState: Ensemble = _
   var paramsRef: ActorRef = _
   var scheduleRef: ActorRef = _
   val generalScheduleTB = TestProbe("GENERAL-SCHEDULE")
@@ -213,7 +213,7 @@ class EnsembleSpec extends BaseAkkaSpec{
       monitor.expectMsgClass(classOf[Monitor.STOP])
       monitor.expectMsgClass(classOf[Monitor.RESTART])
       monitor.expectMsgClass(classOf[Monitor.START])
-      ensembleState = ensembleRef.underlyingActor
+      advEnsembleState = advEnsembleRef.underlyingActor
     }
     "keep ensemble actorRef when restarted" in {
       TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}") should equal(advEnsembleRef)
@@ -263,7 +263,7 @@ class EnsembleSpec extends BaseAkkaSpec{
 
   val backEnsembleJson = getJSValueFromString(Utils_JSONTest.ensemble_backoff_test_json)
   var backEnsembleRef:TestActorRef[Ensemble] = _
-  var backEnsembleState: Ensemble = ensembleRef.underlyingActor
+  var backEnsembleState: Ensemble = _
   var backParamsRef: ActorRef = _
   var backScheduleRef: ActorRef = _
   val backprocessParamsTB = TestProbe("BACKOFF")
