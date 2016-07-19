@@ -51,7 +51,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     */
   @volatile private var scheduler: Cancellable = null
   @volatile private var endBackoff: Long = 0
-  private val monitoring_actor = FEY_MONITOR.actorRef
+  private[fey] val monitoring_actor = FEY_MONITOR.actorRef
 
   override final def receive: Receive = {
 
@@ -139,6 +139,25 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     }
   }
 
+  /**
+    * Check state of scheduler
+    * @return true if scheduller is running
+    */
+  final def isShedulerRunning():Boolean = {
+    if(scheduler != null && !scheduler.isCancelled){
+      true
+    }else{
+      false
+    }
+  }
+
+  /**
+    * get endBackoff
+    * @return
+    */
+  final def getEndBackoff(): Long = {
+    endBackoff
+  }
   /**
     * Called by the scheduler.
     */

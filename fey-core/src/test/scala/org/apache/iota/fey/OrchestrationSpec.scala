@@ -68,7 +68,7 @@ class OrchestrationSpec extends BaseAkkaSpec{
       TestProbe().expectActor(s"${orchRef.path}/${(ensemble2 \ JSON_PATH.GUID).as[String]}/TEST-0001")
       TestProbe().expectActor(s"${orchRef.path}/${(ensemble1 \ JSON_PATH.GUID).as[String]}/TEST-0001")
     }
-    s"result in two entries in Orchestration.ensembles matching the craeted ensembles" in {
+    s"result in two entries in Orchestration.ensembles matching the created ensembles" in {
       orchState.ensembles should have size(2)
       orchState.ensembles should contain key((ensemble1 \ JSON_PATH.GUID).as[String])
       orchState.ensembles should contain key((ensemble2 \ JSON_PATH.GUID).as[String])

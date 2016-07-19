@@ -37,7 +37,7 @@ class EnsembleSpec extends BaseAkkaSpec{
     override val monitoring_actor = monitor.ref
   }), parent.ref, (ensembleJson \ JSON_PATH.GUID).as[String])
 
-  val ensembleState = ensembleRef.underlyingActor
+  var ensembleState = ensembleRef.underlyingActor
 
   var simplePerformerRef: ActorRef = _
 
@@ -93,7 +93,7 @@ class EnsembleSpec extends BaseAkkaSpec{
     }
     s"result in Performer 'TEST-0004' restarted" in {
       val newPerformer = TestProbe().expectActor(s"${parent.ref.path}/${(ensembleJson \ JSON_PATH.GUID).as[String]}/TEST-0004")
-      newPerformer.compareTo(simplePerformerRef) should not be(0)
+      newPerformer should not equal(simplePerformerRef)
     }
     "result in two paths added to IdentifyFeyActors.actorsPath" in{
       globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(parent.ref.path.toString)
@@ -213,13 +213,14 @@ class EnsembleSpec extends BaseAkkaSpec{
       monitor.expectMsgClass(classOf[Monitor.STOP])
       monitor.expectMsgClass(classOf[Monitor.RESTART])
       monitor.expectMsgClass(classOf[Monitor.START])
+      ensembleState = ensembleRef.underlyingActor
     }
     "keep ensemble actorRef when restarted" in {
-      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}").compareTo(advEnsembleRef) should be(0)
+      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}") should equal(advEnsembleRef)
     }
     "stop and start the performer with a new reference" in{
-      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-SCHEDULER").compareTo(scheduleRef) should not be(0)
-      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-PARAMS").compareTo(paramsRef) should not be(0)
+      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-SCHEDULER") should not equal(scheduleRef)
+      TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-PARAMS") should not equal(paramsRef)
       scheduleRef = TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-SCHEDULER")
       paramsRef = TestProbe().expectActor(s"${parent.ref.path}/${(advEnsembleJson \ JSON_PATH.GUID).as[String]}/PERFORMER-PARAMS")
     }
@@ -266,6 +267,7 @@ class EnsembleSpec extends BaseAkkaSpec{
   var backParamsRef: ActorRef = _
   var backScheduleRef: ActorRef = _
   val backprocessParamsTB = TestProbe("BACKOFF")
+  val routee = """$a"""
 
   s"creating Ensemble with Backoff performer" should {
     s"result in creation of Ensemble actor " in {
@@ -292,8 +294,8 @@ class EnsembleSpec extends BaseAkkaSpec{
    "not process messages during the backoff period" in{
      backScheduleRef ! ((schedulerScheduleTB.ref, system.deadLetters, generalScheduleTB.ref))
      backParamsRef ! ((system.deadLetters, backprocessParamsTB.ref, generalParamsTB.ref))
-     backprocessParamsTB.expectMsg("PROCESS - EXECUTE - akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$a")
-     backprocessParamsTB.expectNoMsg(1000.milliseconds)
+     backprocessParamsTB.expectMsg(s"PROCESS - EXECUTE - ${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$routee")
+     backprocessParamsTB.expectNoMsg(990.milliseconds)
    }
   }
 
@@ -302,10 +304,10 @@ class EnsembleSpec extends BaseAkkaSpec{
       globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(parent.ref.path.toString)
       Thread.sleep(500)
       IdentifyFeyActors.actorsPath should have size(4)
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005")
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-PARAMS")
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER")
-      IdentifyFeyActors.actorsPath should contain("akka://FEY-TEST/system/ENSEMBLE-1/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$a")
+      IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005")
+      IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-PARAMS")
+      IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER")
+      IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$routee")
     }
   }
 
