@@ -18,14 +18,11 @@
 
 package org.apache.iota.fey
 
-import java.io.File
 import java.nio.file.Paths
 
 import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify, Props}
 import akka.testkit.{EventFilter, TestActorRef, TestEvent, TestProbe}
-import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import org.apache.commons.io.FileUtils
 import org.scalatest.BeforeAndAfterAll
 import play.api.libs.json._
 
@@ -34,10 +31,9 @@ import scala.concurrent.Await
 
 class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
 
-  createFeyTmpDirectoriesForTest()
-  val conf = getClass.getResource("/test-fey-configuration.conf")
-  CONFIG.loadUserConfiguration(Paths.get(conf.toURI()).toFile().getAbsolutePath)
-  copyTestActorToTmp()
+  //Load default configuration for Fey when running tests
+  CONFIG.loadUserConfiguration(Paths.get(TestSetup.configTest.toURI()).toFile().getAbsolutePath)
+  TestSetup.setup()
 
   val systemName = "FEY-TEST"
   implicit val system = ActorSystem(systemName, ConfigFactory.parseString("""akka.loggers = ["akka.testkit.TestEventListener"]"""))
@@ -50,24 +46,8 @@ class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
   val globalIdentifierRef = system.actorOf(Props[IdentifyFeyActors],globalIdentifierName)
 
   override protected def afterAll(): Unit = {
+    Monitor.events.removeAllNodes()
     Await.ready(system.terminate(), 20.seconds)
-  }
-
-  private def copyTestActorToTmp(): Unit = {
-    val jarTest = getClass.getResource("/fey-test-actor.jar")
-    val dest = new File(s"${CONFIG.JAR_REPOSITORY}/fey-test-actor.jar")
-    FileUtils.copyURLToFile(jarTest, dest)
-  }
-
-  private def createFeyTmpDirectoriesForTest(): Unit = {
-    var file = new File(s"/tmp/fey/test/checkpoint")
-    file.mkdirs()
-    file = new File(s"/tmp/fey/test/json")
-    file.mkdirs()
-    file = new File(s"/tmp/fey/test/jars")
-    file.mkdirs()
-    file = new File(s"/tmp/fey/test/jars/dynamic")
-    file.mkdirs()
   }
 
   implicit class TestProbeOps(probe: TestProbe) {

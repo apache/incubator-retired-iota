@@ -60,7 +60,10 @@ object BuildSettings {
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
-    }
+    },
+    //All tests on Fey are integrated tests.
+    //All tests need to be execute sequentially
+    parallelExecution in Test := false
   )
 
   lazy val StreambuildSettings = Defaults.coreDefaultSettings ++ Seq(
