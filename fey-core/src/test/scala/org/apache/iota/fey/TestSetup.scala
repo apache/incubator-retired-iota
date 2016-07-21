@@ -22,6 +22,7 @@ import java.io.File
 import java.nio.file.Paths
 
 import org.apache.commons.io.FileUtils
+import org.scalatest.Tag
 
 object TestSetup {
 
@@ -59,11 +60,14 @@ object TestSetup {
     file.mkdirs()
     file = new File(s"/tmp/fey/test/json")
     file.mkdirs()
+    file = new File(s"/tmp/fey/test/json/watchtest")
+    file.mkdirs()
     file = new File(s"/tmp/fey/test/jars")
     file.mkdirs()
     file = new File(s"/tmp/fey/test/jars/dynamic")
     file.mkdirs()
   }
 
-
 }
+
+object SlowTest extends Tag("org.apache.iota.fey.SlowTest")

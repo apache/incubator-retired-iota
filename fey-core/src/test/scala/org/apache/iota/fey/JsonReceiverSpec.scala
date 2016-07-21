@@ -16,7 +16,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.iota.fey
 
 import java.nio.file.{Files, Paths}

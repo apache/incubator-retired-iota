@@ -67,7 +67,7 @@ class WatchServiceReceiver(receiverActor: ActorRef) extends JsonReceiver{
     key.reset()
   }
 
-  private def processJson(path: String, file: File) = {
+  private[fey] def processJson(path: String, file: File) = {
     try{
       getJsonObject(path) match {
         case Some(orchestrationJSON) =>
