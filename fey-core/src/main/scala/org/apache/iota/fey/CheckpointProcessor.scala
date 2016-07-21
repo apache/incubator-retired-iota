@@ -78,4 +78,7 @@ class CheckpointProcessor(receiverActor: ActorRef) extends JsonReceiver{
         processJson(file.getAbsolutePath, file)
       })
   }
+
+  override def execute(): Unit = {}
+  override def exceptionOnRun(e: Exception): Unit = {}
 }

@@ -103,6 +103,8 @@ trait JsonReceiver extends Runnable{
 
             downloadJAR(url, jarName, credentials)
           }
+        }else{
+          log.debug("Location not defined in JSON")
         }
       })
     })
@@ -171,7 +173,7 @@ trait JsonReceiver extends Runnable{
   /**
     * Called inside run method
     */
-  def execute(): Unit = {}
+  def execute(): Unit
 
   /**
     * Called when occurs an exception inside Run.
@@ -179,7 +181,7 @@ trait JsonReceiver extends Runnable{
     *
     * @param e
     */
-  def exceptionOnRun(e: Exception): Unit = {}
+  def exceptionOnRun(e: Exception): Unit
 }
 
 object HttpBasicAuth {

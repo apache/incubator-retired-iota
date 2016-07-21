@@ -359,4 +359,62 @@ object Utils_JSONTest {
        ]
      }
     """
+
+  val test_json_schema_invalid =
+    """{
+       "guid" : "TEST-ACTOR",
+       "command" : "CREATE",
+       "timestamp": "213263914979",
+       "name" : "ORCHESTRATION FOR TEST",
+       "ensembles" : [
+         {
+           "guid":"MY-ENSEMBLE-0001",
+           "performers":[
+             {
+               "guid": "TEST-0001",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             }
+           ],
+           "connections":[]
+         }
+       ]
+     }"""
+
+  val location_test =
+    """{
+        "guid": "Orch2",
+        "command": "CREATE",
+        "timestamp": "591997890",
+        "name": "DESCRIPTION",
+        "ensembles": [
+          {
+            "guid": "En2",
+            "command": "NONE",
+            "performers": [
+              {
+                "guid": "S2",
+                "schedule": 1000,
+                "backoff": 0,
+                "source": {
+                  "name": "fey-stream.jar",
+                  "classPath": "org.apache.iota.fey.performer.Timestamp",
+                  "location" :{
+                    "url" : "https://github.com/apache/incubator-iota/raw/master/fey-examples/active-jar-repo"
+                  },
+                  "parameters": {
+                  }
+                }
+              }
+            ],
+            "connections": [
+            ]
+          }
+        ]
+      }"""
 }
