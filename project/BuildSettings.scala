@@ -63,7 +63,17 @@ object BuildSettings {
     },
     //All tests on Fey are integrated tests.
     //All tests need to be execute sequentially
-    parallelExecution in Test := false
+    parallelExecution in Test := false,
+    testOptions in Test += Tests.Cleanup( () => {
+      println("CLenning up")
+      removeAll("/tmp/fey/test")
+      def removeAll(path: String) = {
+        def getRecursively(f: File): Seq[File] =
+          f.listFiles.filter(_.isDirectory).flatMap(getRecursively) ++ f.listFiles
+        getRecursively(new File(path)).foreach{f =>
+          if (!f.delete()) println(s"could not delete ${f.getAbsolutePath}")}
+      }
+    })
   )
 
   lazy val StreambuildSettings = Defaults.coreDefaultSettings ++ Seq(
