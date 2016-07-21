@@ -34,14 +34,24 @@ object TestSetup {
       println("SETTING UP ...")
       createFeyTmpDirectoriesForTest()
       copyTestActorToTmp()
+      copyJSONstoTmp()
       runSetup = false
     }
   }
 
   private def copyTestActorToTmp(): Unit = {
-    val jarTest = getClass.getResource("/fey-test-actor.jar")
-    val dest = new File(s"${CONFIG.JAR_REPOSITORY}/fey-test-actor.jar")
-    FileUtils.copyURLToFile(jarTest, dest)
+    copyResourceFileToLocal("/fey-test-actor.jar",s"${CONFIG.JAR_REPOSITORY}/fey-test-actor.jar")
+  }
+
+  private def copyJSONstoTmp(): Unit = {
+    copyResourceFileToLocal("/json/valid-json.json",s"${CONFIG.JSON_REPOSITORY}/valid-json.json.not")
+    copyResourceFileToLocal("/json/invalid-json.json",s"${CONFIG.JSON_REPOSITORY}/invalid-json.json.not")
+  }
+
+  private def copyResourceFileToLocal(resourcePath: String, destination: String): Unit = {
+    val resourceFile = getClass.getResource(resourcePath)
+    val dest = new File(destination)
+    FileUtils.copyURLToFile(resourceFile, dest)
   }
 
   private def createFeyTmpDirectoriesForTest(): Unit = {

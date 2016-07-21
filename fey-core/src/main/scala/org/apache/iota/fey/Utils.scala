@@ -160,6 +160,8 @@ protected object Utils {
               log.info(s"Orchestration ${orchestrationID} saved.")
           }
       }
+    }else{
+      log.debug("Checkpoint not enabled")
     }
   }
 

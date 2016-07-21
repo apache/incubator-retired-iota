@@ -21,7 +21,7 @@ package org.apache.iota.fey
 import java.nio.file.Paths
 
 import akka.actor.{ActorIdentity, ActorRef, ActorSystem, Identify, Props}
-import akka.testkit.{EventFilter, TestActorRef, TestEvent, TestProbe}
+import akka.testkit.{EventFilter, TestEvent, TestProbe}
 import com.typesafe.config.ConfigFactory
 import org.scalatest.BeforeAndAfterAll
 import play.api.libs.json._
@@ -29,9 +29,10 @@ import play.api.libs.json._
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.concurrent.Await
 
-class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
+class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll with LoggingTest{
 
   //Load default configuration for Fey when running tests
+  resetCapturedLogs()
   CONFIG.loadUserConfiguration(Paths.get(TestSetup.configTest.toURI()).toFile().getAbsolutePath)
   TestSetup.setup()
 
@@ -46,6 +47,8 @@ class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll{
   val globalIdentifierRef = system.actorOf(Props[IdentifyFeyActors],globalIdentifierName)
 
   override protected def afterAll(): Unit = {
+    //Force reload of GenericActor's jar
+    Utils.loadedJars.remove("fey-test-actor.jar")
     Monitor.events.removeAllNodes()
     Await.ready(system.terminate(), 20.seconds)
   }
