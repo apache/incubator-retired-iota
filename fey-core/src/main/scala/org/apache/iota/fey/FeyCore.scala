@@ -52,16 +52,14 @@ protected class FeyCore extends Actor with ActorLogging{
       val jsonReceiverActor: ActorRef = context.actorOf(Props[JsonReceiverActor], name = JSON_RECEIVER_NAME)
       context.watch(jsonReceiverActor)
 
-    case ORCHESTRATION_RECEIVED(orchestrationJson, file) =>
-      log.info(s"NEW FILE ${file.getAbsolutePath}")
-      try{
-        processJson(orchestrationJson)
-        renameProcessedFile(file, "processed")
-      }catch {
-        case e: Exception =>
-          renameProcessedFile(file, "failed")
-          log.error(e, s"JSON not processed ${file.getAbsolutePath}")
+    case ORCHESTRATION_RECEIVED(orchestrationJson, optionFile) =>
+      optionFile match {
+        case Some(file) =>
+          orchestrationReceivedWithFile(orchestrationJson, file)
+        case None =>
+          orchestrationReceivedNoFile(orchestrationJson)
       }
+
 
     case STOP_EMPTY_ORCHESTRATION(orchID) =>
       log.warning(s"Deleting Empty Orchestration $orchID")
@@ -74,6 +72,29 @@ protected class FeyCore extends Actor with ActorLogging{
     case x =>
       log.info(s"Received $x")
 
+  }
+
+  private def orchestrationReceivedNoFile(json: JsValue) = {
+    val orchGUID = (json \ GUID).as[String]
+    log.info(s"Orchestration $orchGUID received")
+    try{
+      processJson(json)
+    }catch {
+      case e: Exception =>
+        log.error(e, s"JSON for orchestration $orchGUID could not be processed")
+    }
+  }
+
+  private def orchestrationReceivedWithFile(json: JsValue, file: File) = {
+    log.info(s"NEW FILE ${file.getAbsolutePath}")
+    try{
+      processJson(json)
+      renameProcessedFile(file, "processed")
+    }catch {
+      case e: Exception =>
+        renameProcessedFile(file, "failed")
+        log.error(e, s"JSON not processed ${file.getAbsolutePath}")
+    }
   }
 
   private def processTerminatedMessage(actorRef: ActorRef) = {
@@ -306,7 +327,8 @@ protected object FeyCore{
     * @param json
     * @param file
     */
-  case class ORCHESTRATION_RECEIVED(json: JsValue, file: File)
+  case class ORCHESTRATION_RECEIVED(json: JsValue, file: Option[File])
+
 
   case class STOP_EMPTY_ORCHESTRATION(orchID: String)
 

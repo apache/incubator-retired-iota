@@ -49,7 +49,7 @@ sealed trait MyService extends HttpService {
         get{
           respondWithMediaType(`text/html`) {
             complete {
-              SYSTEM_ACTORS.fey ! JSON_TREE
+              FEY_CORE_ACTOR.actorRef ! JSON_TREE
               Thread.sleep(2000)
               val json = IdentifyFeyActors.generateTreeJson()
               IdentifyFeyActors.getHTMLTree(json)

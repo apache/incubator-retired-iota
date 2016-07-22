@@ -62,7 +62,7 @@ class FeyCoreSpec extends BaseAkkaSpec  {
   val orchestration_name = "TEST-ACTOR"
 
   "Sending FeyCore.ORCHESTRATION_RECEIVED with CREATE command to FeyCore" should {
-    feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.create_json_test), new File("/tmp/fey/test/json"))
+    feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.create_json_test), None)
     s"result in creating an Orchestration child actor with the name '$orchestration_name'" in {
       orchestrationref = TestProbe().expectActor(s"$feyPath/$orchestration_name")
     }
@@ -85,14 +85,14 @@ class FeyCoreSpec extends BaseAkkaSpec  {
 
   "Sending FeyCore.ORCHESTRATION_RECEIVED with UPDATE command to FeyCore" should {
     s"result in creating a new Performer child actor with the name '$orchestration_name/MY-ENSEMBLE-0001/TEST-0002'" in {
-      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.update_json_test), new File("/tmp/fey/test/json"))
+      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.update_json_test), None)
       ensemble1Test2ref = TestProbe().expectActor(s"$feyPath/$orchestration_name/MY-ENSEMBLE-0001/TEST-0002")
     }
   }
 
   "Sending FeyCore.ORCHESTRATION_RECEIVED with UPDATE command and DELETE ensemble to FeyCore" should {
     s"result in termination of Ensemble with the name '$orchestration_name/MY-ENSEMBLE-0001'" in {
-      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.update_delete_json_test), new File("/tmp/fey/test/json"))
+      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.update_delete_json_test), None)
       TestProbe().verifyActorTermination(ensemble1ref)
     }
     s"result in termination of Performer with the name '$orchestration_name/MY-ENSEMBLE-0001/TEST-0001'" in {
@@ -106,7 +106,7 @@ class FeyCoreSpec extends BaseAkkaSpec  {
   "Sending FeyCore.ORCHESTRATION_RECEIVED with RECREATE command and same Timestamp to FeyCore" should {
     s"result in logging a 'not recreated' message at Warn " in {
       EventFilter.warning(pattern = s".*$orchestration_name not recreated.*", occurrences = 1) intercept {
-        feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.recreate_timestamp_json_test), new File("/tmp/fey/test/json"))
+        feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.recreate_timestamp_json_test), None)
       }
     }
   }
@@ -121,7 +121,7 @@ class FeyCoreSpec extends BaseAkkaSpec  {
 
   "Sending FeyCore.ORCHESTRATION_RECEIVED with DELETE command to FeyCore" should {
     s"result in termination of Orchestration with the name '$orchestration_name'" in {
-      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.delete_json_test), new File("/tmp/fey/test/json"))
+      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.delete_json_test), None)
       TestProbe().verifyActorTermination(orchestrationref)
     }
     "result in sending TERMINATE message to Monitor actor" in {
@@ -140,7 +140,7 @@ class FeyCoreSpec extends BaseAkkaSpec  {
 
   "Sending FeyCore.STOP_EMPTY_ORCHESTRATION to FeyCore" should {
     s"result in termination of 'TEST-ORCH-2'" in {
-      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.orchestration_test_json), new File("/tmp/fey/test/json"))
+      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.orchestration_test_json), None)
       val ref = TestProbe().expectActor(s"$feyPath/TEST-ORCH-2")
       FEY_CACHE.activeOrchestrations should have size(1)
       FEY_CACHE.activeOrchestrations should contain key("TEST-ORCH-2")

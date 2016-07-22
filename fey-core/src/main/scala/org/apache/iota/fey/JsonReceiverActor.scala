@@ -29,12 +29,15 @@ class JsonReceiverActor extends Actor with ActorLogging {
   import JsonReceiverActor._
 
   val monitoring_actor = FEY_MONITOR.actorRef
-  val watchFileTask = new WatchServiceReceiver(self)
-  var watchThread = new Thread(watchFileTask, GLOBAL_DEFINITIONS.WATCH_SERVICE_THREAD)
+  var watchFileTask: WatchServiceReceiver = _
+  var watchThread: Thread = _
 
   override def preStart() {
     prepareDynamicJarRepo()
     processCheckpointFiles()
+
+    watchFileTask = new WatchServiceReceiver(self)
+    watchThread = new Thread(watchFileTask, GLOBAL_DEFINITIONS.WATCH_SERVICE_THREAD)
 
     monitoring_actor  ! Monitor.START(Utils.getTimestamp)
     watchThread.setDaemon(true)
@@ -74,7 +77,7 @@ class JsonReceiverActor extends Actor with ActorLogging {
   override def receive: Receive = {
     case JSON_RECEIVED(json, file) =>
       log.info(s"JSON RECEIVED => ${Json.stringify(json)}")
-      context.parent ! FeyCore.ORCHESTRATION_RECEIVED(json, file)
+      context.parent ! FeyCore.ORCHESTRATION_RECEIVED(json, Some(file))
 
     case _ =>
   }
