@@ -417,4 +417,135 @@ object Utils_JSONTest {
           }
         ]
       }"""
+
+  val location_test_2 =
+    """{
+        "guid": "Orch2",
+        "command": "CREATE",
+        "timestamp": "591997890",
+        "name": "DESCRIPTION",
+        "ensembles": [
+          {
+            "guid": "En2",
+            "command": "NONE",
+            "performers": [
+              {
+                "guid": "S2",
+                "schedule": 1000,
+                "backoff": 0,
+                "source": {
+                  "name": "fey-virtual-sensor.jar",
+                  "classPath": "org.apache.iota.fey.performer.Sensor",
+                  "location" :{
+                    "url" : "https://github.com/apache/incubator-iota/raw/master/fey-examples/active-jar-repo"
+                  },
+                  "parameters": {
+                  }
+                }
+              }
+            ],
+            "connections": [
+            ]
+          }
+        ]
+      }"""
+
+  val generic_receiver_json = """{
+        "guid": "RECEIVER_ORCHESTRATION",
+        "command": "CREATE",
+        "timestamp": "591997890",
+        "name": "DESCRIPTION",
+        "ensembles": [
+          {
+            "guid": "RECEIVER-ENSEMBLE",
+            "command": "NONE",
+            "performers": [
+              {
+                "guid": "MY_RECEIVER_PERFORMER",
+                "schedule": 0,
+                "backoff": 0,
+                "source": {
+                  "name": "fey-test-actor.jar",
+                  "classPath": "org.apache.iota.fey.TestReceiverActor",
+                  "parameters": {
+                  }
+                }
+              }
+            ],
+            "connections": [
+            ]
+          }
+        ]
+      }"""
+
+  val json_for_receiver_test =
+    """{
+       "guid" : "RECEIVED-BY-ACTOR-RECEIVER",
+       "command" : "CREATE",
+       "timestamp": "213263914979",
+       "name" : "ORCHESTRATION FOR TEST",
+       "ensembles" : [
+         {
+           "guid":"MY-ENSEMBLE-REC-0001",
+           "command": "NONE",
+           "performers":[
+             {
+               "guid": "TEST-0001",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             }
+           ],
+           "connections":[]
+         },
+         {
+            "guid":"MY-ENSEMBLE-REC-0002",
+            "command": "NONE",
+            "performers":[
+              {
+                "guid": "TEST-0001",
+                "schedule": 0,
+                "backoff": 0,
+                "source": {
+                  "name": "fey-test-actor.jar",
+                  "classPath": "org.apache.iota.fey.TestActor_2",
+                  "parameters": {}
+                }
+              }
+            ],
+            "connections":[]
+          }
+       ]
+     }"""
+
+  val json_for_receiver_test_delete =
+    """{
+       "guid" : "RECEIVED-BY-ACTOR-RECEIVER",
+       "command" : "DELETE",
+       "timestamp": "213263914979",
+       "name" : "ORCHESTRATION FOR TEST",
+       "ensembles" : [
+         {
+           "guid":"MY-ENSEMBLE-REC-0001",
+           "command": "NONE",
+           "performers":[
+             {
+               "guid": "TEST-0001",
+               "schedule": 0,
+               "backoff": 0,
+               "source": {
+                 "name": "fey-test-actor.jar",
+                 "classPath": "org.apache.iota.fey.TestActor",
+                 "parameters": {}
+               }
+             }
+           ],
+           "connections":[]
+         }
+       ]
+     }"""
 }

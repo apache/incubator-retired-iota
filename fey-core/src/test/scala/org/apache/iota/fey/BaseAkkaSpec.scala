@@ -68,6 +68,19 @@ class BaseAkkaSpec extends BaseSpec with BeforeAndAfterAll with LoggingTest{
       }
     }
 
+    def expectActorInSystem(path: String, lookInSystem: ActorSystem, max: FiniteDuration = 3.seconds): ActorRef = {
+      probe.within(max) {
+        var actor = null: ActorRef
+        probe.awaitAssert {
+          (lookInSystem actorSelection path).tell(Identify(path), probe.ref)
+          probe.expectMsgPF(100 milliseconds) {
+            case ActorIdentity(`path`, Some(ref)) => actor = ref
+          }
+        }
+        actor
+      }
+    }
+
     def verifyActorTermination(actor: ActorRef)(implicit system: ActorSystem): Unit = {
       val watcher = TestProbe()
       watcher.watch(actor)

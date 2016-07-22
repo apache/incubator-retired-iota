@@ -63,7 +63,7 @@ class JsonReceiverSpec extends BaseAkkaSpec with LoggingTest{
     }
     "download jar dynamically from URL" in {
       receiver.checkForLocation(getJSValueFromString(Utils_JSONTest.location_test))
-      Files.exists(Paths.get(s"${CONFIG.DYNAMIC_JAR_REPO}/fey-stream.jar"))
+      Files.exists(Paths.get(s"${CONFIG.DYNAMIC_JAR_REPO}/fey-stream.jar")) should be(true)
     }
   }
 
