@@ -43,7 +43,7 @@ protected object Utils {
     * JARNAME,[CLASSPATH, CLASS]
     */
   val loadedJars: HashMap[String, (URLClassLoader, Map[String, Class[FeyGenericActor]])]
-                = HashMap.empty[String, (URLClassLoader, Map[String, Class[FeyGenericActor]])]
+  = HashMap.empty[String, (URLClassLoader, Map[String, Class[FeyGenericActor]])]
 
   /**
     * Gets a list of Files in the directory
@@ -51,11 +51,11 @@ protected object Utils {
     * @param stringPath dir path
     * @return Array of files in the directory
     */
-  def getFilesInDirectory(stringPath: String): Array[File]= {
+  def getFilesInDirectory(stringPath: String): Array[File] = {
     val dir = new File(stringPath)
     if (dir.exists && dir.isDirectory) {
       dir.listFiles()
-    }else{
+    } else {
       Array.empty
     }
   }
@@ -63,16 +63,16 @@ protected object Utils {
   /**
     * Loads an actor class from a .jar that inherited from FeyGenericActor
     *
-    * @param path path to the .jar (including the name)
+    * @param path      path to the .jar (including the name)
     * @param className class path inside the jar
     * @return class of FeyGenericActor
     */
-  def loadActorClassFromJar(path: String, className: String, jarName: String):Class[FeyGenericActor] = {
+  def loadActorClassFromJar(path: String, className: String, jarName: String): Class[FeyGenericActor] = {
 
     loadedJars.get(jarName) match {
 
       case None =>
-        val urls:Array[URL] = Array(new URL(s"jar:file:$path!/"))
+        val urls: Array[URL] = Array(new URL(s"jar:file:$path!/"))
         val cl: URLClassLoader = URLClassLoader.newInstance(urls)
         val clazz = cl.loadClass(className)
         val feyClazz = clazz.asInstanceOf[Class[FeyGenericActor]]
@@ -101,10 +101,10 @@ protected object Utils {
     * @return JsValue of the file
     */
   def loadJsonFromFile(file: File): Option[JsValue] = {
-    try{
+    try {
       val stringJson = Source.fromFile(file).getLines.mkString
       Option(Json.parse(stringJson))
-    }catch{
+    } catch {
       case e: Exception =>
         log.error("Could not parse JSON", e)
         None
@@ -112,7 +112,7 @@ protected object Utils {
   }
 
   def renameProcessedFile(file: File, extension: String): Unit = {
-    if(CHEKPOINT_ENABLED) {
+    if (CHEKPOINT_ENABLED) {
       file.renameTo(new File(s"${file.getAbsoluteFile}.$extension"))
     }
   }
@@ -124,7 +124,7 @@ protected object Utils {
     * @param delete
     * @return
     */
-  def updateOrchestrationState(orchestrationID: String, delete: Boolean = false) : Unit = {
+  def updateOrchestrationState(orchestrationID: String, delete: Boolean = false): Unit = {
     if (CHEKPOINT_ENABLED) {
       FEY_CACHE.activeOrchestrations.get(orchestrationID) match {
         case None =>
@@ -160,7 +160,7 @@ protected object Utils {
               log.info(s"Orchestration ${orchestrationID} saved.")
           }
       }
-    }else{
+    } else {
       log.debug("Checkpoint not enabled")
     }
   }
@@ -170,11 +170,11 @@ protected object Utils {
     *
     * @return Long
     */
-  def getTimestamp:Long = System.currentTimeMillis()
+  def getTimestamp: Long = System.currentTimeMillis()
 
 }
 
-object JSON_PATH{
+object JSON_PATH {
   val PERFORMERS: String = "performers"
   val CONNECTIONS: String = "connections"
   val GUID: String = "guid"
@@ -197,7 +197,7 @@ object JSON_PATH{
   val JAR_CRED_PASSWORD = "password"
 }
 
-object CONFIG{
+object CONFIG {
 
   private val log = LoggerFactory.getLogger(this.getClass)
 
@@ -205,6 +205,7 @@ object CONFIG{
   val CONSOLE_APPENDER = "FEY-CONSOLE"
   val CONTROL_AWARE_MAILBOX = "akka.fey-dispatchers.control-aware-dispatcher"
 
+  val DEFAULT_MESSAGE_SIZE = 500
   var CHECKPOINT_DIR = ""
   var JSON_REPOSITORY = ""
   var JSON_EXTENSION = ""
@@ -212,32 +213,32 @@ object CONFIG{
   var CHEKPOINT_ENABLED = true
   var LOG_LEVEL = ""
   var LOG_APPENDER = ""
-  var MESSAGES_PER_RESIZE:Int = 500
+  var MESSAGES_PER_RESIZE: Int = DEFAULT_MESSAGE_SIZE
   var DYNAMIC_JAR_REPO = ""
   var DYNAMIC_JAR_FORCE_PULL = false
 
-  def loadUserConfiguration(path: String) : Unit = {
+  def loadUserConfiguration(path: String): Unit = {
 
     val app = {
-      if(path != "" && Files.exists(Paths.get(path))) {
-          ConfigFactory.parseFile(new File(path)).withFallback(ConfigFactory.load())
-      }else {
-          log.info("Using Fey Default Configuration")
-          log.warn(s"No user configuration defined. Check if your configuration path $path is right.")
-          ConfigFactory.load()
+      if (path != "" && Files.exists(Paths.get(path))) {
+        ConfigFactory.parseFile(new File(path)).withFallback(ConfigFactory.load())
+      } else {
+        log.info("Using Fey Default Configuration")
+        log.warn(s"No user configuration defined. Check if your configuration path $path is right.")
+        ConfigFactory.load()
       }
     }.getConfig("fey-global-configuration").resolve()
 
-      CHECKPOINT_DIR = app.getString("checkpoint-directory")
-      JSON_REPOSITORY = app.getString("json-repository")
-      JSON_EXTENSION = app.getString("json-extension")
-      JAR_REPOSITORY = app.getString("jar-repository")
-      CHEKPOINT_ENABLED = app.getBoolean("enable-checkpoint")
-      LOG_LEVEL = app.getString("log-level").toUpperCase()
-      LOG_APPENDER = app.getString("log-appender").toUpperCase()
-      MESSAGES_PER_RESIZE = app.getInt("auto-scale.messages-per-resize")
-      DYNAMIC_JAR_REPO = app.getString("dynamic-jar-population.downloaded-repository")
-      DYNAMIC_JAR_FORCE_PULL = app.getBoolean("dynamic-jar-population.force-pull")
+    CHECKPOINT_DIR = app.getString("checkpoint-directory")
+    JSON_REPOSITORY = app.getString("json-repository")
+    JSON_EXTENSION = app.getString("json-extension")
+    JAR_REPOSITORY = app.getString("jar-repository")
+    CHEKPOINT_ENABLED = app.getBoolean("enable-checkpoint")
+    LOG_LEVEL = app.getString("log-level").toUpperCase()
+    LOG_APPENDER = app.getString("log-appender").toUpperCase()
+    MESSAGES_PER_RESIZE = app.getInt("auto-scale.messages-per-resize")
+    DYNAMIC_JAR_REPO = app.getString("dynamic-jar-population.downloaded-repository")
+    DYNAMIC_JAR_FORCE_PULL = app.getBoolean("dynamic-jar-population.force-pull")
 
     setLogbackConfiguration()
   }
@@ -245,19 +246,19 @@ object CONFIG{
   /**
     * Resets logback context configuration and loads the new one
     */
-  def setLogbackConfiguration() : Unit = {
-    val  context: LoggerContext = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
+  def setLogbackConfiguration(): Unit = {
+    val context: LoggerContext = LoggerFactory.getILoggerFactory.asInstanceOf[LoggerContext]
     try {
       val root = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).asInstanceOf[Logger]
       root.setLevel(getLogLevel)
       setLogAppenders(root)
     } catch {
-      case e: Exception => log.error("Could not configure logback",e)
+      case e: Exception => log.error("Could not configure logback", e)
     }
     StatusPrinter.printInCaseOfErrorsOrWarnings(context)
   }
 
-  def setLogAppenders(root: Logger) : Unit = {
+  def setLogAppenders(root: Logger): Unit = {
     LOG_APPENDER match {
       case "FILE" =>
         root.getAppender(CONSOLE_APPENDER).stop()
@@ -299,10 +300,16 @@ object GLOBAL_DEFINITIONS {
   val WATCH_SERVICE_THREAD = "FeyWatchService"
 }
 
+object CONSTANTS {
+  val NULL = null
+}
 
+case class NetworkAlreadyDefined(message: String) extends Exception(message)
 
-case class NetworkAlreadyDefined(message:String)  extends Exception(message)
-case class IllegalPerformerCreation(message:String)  extends Exception(message)
-case class NetworkNotDefined(message:String)  extends Exception(message)
-case class CommandNotRecognized(message:String)  extends Exception(message)
-case class RestartEnsemble(message:String)  extends Exception(message)
+case class IllegalPerformerCreation(message: String) extends Exception(message)
+
+case class NetworkNotDefined(message: String) extends Exception(message)
+
+case class CommandNotRecognized(message: String) extends Exception(message)
+
+case class RestartEnsemble(message: String) extends Exception(message)

@@ -40,37 +40,41 @@ protected class Monitor(eventsStore: Trie) extends Actor {
 
     case START(timestamp, info) =>
       logInfo(sender().path.toString, EVENTS.START, timestamp, info)
-      eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.START, timestamp, info))
+      eventsStore.append(sender().path.toString, MonitorEvent(EVENTS.START, timestamp, info))
 
     case STOP(timestamp, info) =>
       logInfo(sender().path.toString, EVENTS.STOP, timestamp, info)
-      eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.STOP, timestamp, info))
+      eventsStore.append(sender().path.toString, MonitorEvent(EVENTS.STOP, timestamp, info))
 
     case RESTART(reason, timestamp) =>
       logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
-      eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.RESTART, timestamp, reason.getMessage))
+      eventsStore.append(sender().path.toString, MonitorEvent(EVENTS.RESTART, timestamp, reason.getMessage))
 
     case TERMINATE(actorPath, timestamp, info) =>
       logInfo(actorPath, EVENTS.TERMINATE, timestamp, info)
-      eventsStore.append(actorPath,MonitorEvent(EVENTS.TERMINATE, timestamp, info))
+      eventsStore.append(actorPath, MonitorEvent(EVENTS.TERMINATE, timestamp, info))
 
   }
 
-  def logInfo(path:String, event:String, timestamp: Long, info:String, reason:Throwable = null) = {
-    if(reason != null){
+  def logInfo(path: String, event: String, timestamp: Long, info: String, reason: Throwable = CONSTANTS.NULL): Unit = {
+    if (Option(reason).isDefined) {
       log.error(reason, s"$event | $timestamp | $path | $info")
-    }else{
+    } else {
       log.info(s"$event | $timestamp | $path | $info")
     }
   }
 
 }
 
-protected object Monitor{
+protected object Monitor {
+
   // Monitoring Messages
   case class START(timestamp: Long, info: String = "")
+
   case class STOP(timestamp: Long, info: String = "")
+
   case class RESTART(reason: Throwable, timestamp: Long)
+
   case class TERMINATE(actorPath: String, timestamp: Long, info: String = "")
 
   // Stores Monitoring event
@@ -90,17 +94,17 @@ protected object Monitor{
     html.replace("$EVENTS_TABLE_CONTENT", mapEventsToRows(events.getRootChildren(), "").mkString("\n"))
   }
 
-  def mapEventsToRows(actors: ArrayBuffer[TrieNode], prefix:String): ArrayBuffer[String] = {
-    actors.map(actor => {
+  def mapEventsToRows(actors: ArrayBuffer[TrieNode], prefix: String): ArrayBuffer[String] = {
+    actors.flatMap(actor => {
       val currentPath = if (prefix == "/user/FEY-CORE") actor.path else s"$prefix/${actor.path}"
       val events = actor.events.map(event => {
         getTableLine(currentPath, event.timestamp, event.event, event.info)
       })
       mapEventsToRows(actor.children, currentPath) ++ events
-    }).flatten
+    })
   }
 
-  private def getTableLine(path: String,timestamp: Long, event: String, info: String):String = {
+  private def getTableLine(path: String, timestamp: Long, event: String, info: String): String = {
     s"<tr><td>$path</td><td>$event</td><td>$info</td><td>$timestamp</td></tr>"
   }
 }

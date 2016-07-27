@@ -28,14 +28,14 @@ import scala.concurrent.duration._
 
 protected class Ensemble(val orchestrationID: String,
                          val orchestrationName: String,
-                         val ensembleSpec: JsObject) extends Actor with ActorLogging{
+                         val ensembleSpec: JsObject) extends Actor with ActorLogging {
 
   import Ensemble._
 
   val monitoring_actor = FEY_MONITOR.actorRef
   var performers_metadata: Map[String, Performer] = Map.empty[String, Performer]
-  var connectors: Map[String,Array[String]] = Map.empty[String,Array[String]]
-  var performer: Map[String,ActorRef] = Map.empty[String,ActorRef]
+  var connectors: Map[String, Array[String]] = Map.empty[String, Array[String]]
+  var performer: Map[String, ActorRef] = Map.empty[String, ActorRef]
 
   override def receive: Receive = {
 
@@ -43,17 +43,17 @@ protected class Ensemble(val orchestrationID: String,
 
     case PRINT_ENSEMBLE =>
       val ed = connectors.map(connector => {
-        s""" \t ${connector._1} : ${connector._2.mkString("[",",","]")}"""
+        s""" \t ${connector._1} : ${connector._2.mkString("[", ",", "]")}"""
       }).mkString("\n")
-      val nd = performers_metadata.map(performer_metadata => s"${performer_metadata._1}").mkString("[",",","]")
-      val actors = performer.map(actor => actor._2.path.name).mkString("["," | ","]")
+      val nd = performers_metadata.map(performer_metadata => s"${performer_metadata._1}").mkString("[", ",", "]")
+      val actors = performer.map(actor => actor._2.path.name).mkString("[", " | ", "]")
       log.info(s"Edges: \n$ed \nNodes: \n\t$nd \nPerformers \n\t$actors")
       context.actorSelection(s"*") ! FeyGenericActor.PRINT_PATH
 
     case Terminated(actor) =>
-      monitoring_actor  ! Monitor.TERMINATE(actor.path.toString, Utils.getTimestamp)
+      monitoring_actor ! Monitor.TERMINATE(actor.path.toString, Utils.getTimestamp)
       log.error(s"DEAD nPerformers ${actor.path.name}")
-      context.children.foreach{ child =>
+      context.children.foreach { child =>
         context.unwatch(child)
         context.stop(child)
       }
@@ -79,7 +79,7 @@ protected class Ensemble(val orchestrationID: String,
   /**
     * Uses the json spec to create the performers
     */
-  override def preStart() : Unit = {
+  override def preStart(): Unit = {
 
     monitoring_actor ! Monitor.START(Utils.getTimestamp)
 
@@ -92,20 +92,20 @@ protected class Ensemble(val orchestrationID: String,
     performer = createPerformers()
 
     val ed = connectors.map(connector => {
-      s""" \t ${connector._1} : ${connector._2.mkString("[",",","]")}"""
+      s""" \t ${connector._1} : ${connector._2.mkString("[", ",", "]")}"""
     }).mkString("\n")
-    val nd = performers_metadata.map(performer => s"${performer._1}").mkString("[",",","]")
-    val actors = performer.map(actor => actor._2.path.name).mkString("["," | ","]")
+    val nd = performers_metadata.map(performer => s"${performer._1}").mkString("[", ",", "]")
+    val actors = performer.map(actor => actor._2.path.name).mkString("[", " | ", "]")
     log.info(s"Edges: \n$ed \nNodes: \n\t$nd \nPerformers \n\t$actors")
 
   }
 
-  override def postStop() : Unit = {
-    monitoring_actor  ! Monitor.STOP(Utils.getTimestamp)
+  override def postStop(): Unit = {
+    monitoring_actor ! Monitor.STOP(Utils.getTimestamp)
   }
 
   override def postRestart(reason: Throwable): Unit = {
-    monitoring_actor  ! Monitor.RESTART(reason, Utils.getTimestamp)
+    monitoring_actor ! Monitor.RESTART(reason, Utils.getTimestamp)
     preStart()
   }
 
@@ -114,7 +114,7 @@ protected class Ensemble(val orchestrationID: String,
     performer.map(performer => performer._2.path.name).toSet
   }
 
-  private def createPerformers(): Map[String,ActorRef] = {
+  private def createPerformers(): Map[String, ActorRef] = {
     val tmpActors: HashMap[String, ActorRef] = HashMap.empty
     connectors.foreach {
       case (performerID: String, connectionIDs: Array[String]) =>
@@ -123,7 +123,7 @@ protected class Ensemble(val orchestrationID: String,
         } catch {
           /* if the creation fails, it will stop all the actors in the Ensemble */
           case e: Exception =>
-            log.error(e,"During Performer creation")
+            log.error(e, "During Performer creation")
             throw new RestartEnsemble("Not able to create the Performers.")
         }
     }
@@ -156,62 +156,62 @@ protected class Ensemble(val orchestrationID: String,
   /**
     * Create an actorOf for the performer in the Ensemble
     *
-    * @param performerID performer uid
+    * @param performerID   performer uid
     * @param connectionIDs performer connections (connectors)
-    * @param tmpActors auxiliar map of actorsRef
+    * @param tmpActors     auxiliar map of actorsRef
     * @return (performerID, ActorRef of the performer)
     */
-  private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors:HashMap[String, ActorRef]):(String, ActorRef) = {
-    if(!tmpActors.contains(performerID)){
-      val performerInfo = performers_metadata.getOrElse(performerID, null)
-      if(performerInfo != null){
+  private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors: HashMap[String, ActorRef]): (String, ActorRef) = {
+    if (!tmpActors.contains(performerID)) {
+      val performerInfo = performers_metadata.getOrElse(performerID, CONSTANTS.NULL)
+      if (Option(performerInfo).isDefined) {
         val connections: Map[String, ActorRef] = connectionIDs.map(connID => {
-          createFeyActor(connID, connectors.getOrElse(connID,Array.empty),tmpActors)
+          createFeyActor(connID, connectors.getOrElse(connID, Array.empty), tmpActors)
         }).toMap
 
-        var actor:ActorRef = null
         val actorProps = getPerformer(performerInfo, connections)
-        if(performerInfo.autoScale > 0) {
+        val actor: ActorRef = if (performerInfo.autoScale > 0) {
 
           val resizer = DefaultResizer(lowerBound = 1, upperBound = performerInfo.autoScale,
             messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = 0.4)
           val smallestMailBox = SmallestMailboxPool(1, Some(resizer))
 
-          actor = context.actorOf(smallestMailBox.props(actorProps), name = performerID)
+          context.actorOf(smallestMailBox.props(actorProps), name = performerID)
 
-        }else{
-          actor = context.actorOf(actorProps, name = performerID)
+        } else {
+          context.actorOf(actorProps, name = performerID)
         }
 
         context.watch(actor)
         tmpActors.put(performerID, actor)
         (performerID, actor)
-      }else{
+      } else {
         throw new IllegalPerformerCreation(s"Performer $performerID is not defined in the JSON")
       }
-    }else{
+    } else {
       (performerID, tmpActors.get(performerID).get)
     }
   }
 
   /**
     * Creates actor props based on JSON configuration
+    *
     * @param performerInfo Performer object
-    * @param connections connections
+    * @param connections   connections
     * @return Props of actor based on JSON config
     */
   private def getPerformer(performerInfo: Performer, connections: Map[String, ActorRef]): Props = {
 
     val clazz = loadClazzFromJar(performerInfo.classPath, s"${performerInfo.jarLocation}/${performerInfo.jarName}", performerInfo.jarName)
 
-    val autoScale = if(performerInfo.autoScale > 0) true else false
+    val autoScale = if (performerInfo.autoScale > 0) true else false
 
     val actorProps = Props(clazz,
       performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, autoScale)
 
-    if(performerInfo.controlAware){
+    if (performerInfo.controlAware) {
       actorProps.withDispatcher(CONFIG.CONTROL_AWARE_MAILBOX)
-    }else{
+    } else {
       actorProps
     }
 
@@ -220,26 +220,26 @@ protected class Ensemble(val orchestrationID: String,
   /**
     * Load a clazz instance of FeyGenericActor from a jar
     *
-    * @param classPath class path
+    * @param classPath   class path
     * @param jarLocation Full path where to load the jar from
     * @return clazz instance of FeyGenericActor
     */
-  private def loadClazzFromJar(classPath: String, jarLocation: String, jarName: String):Class[FeyGenericActor] = {
+  private def loadClazzFromJar(classPath: String, jarLocation: String, jarName: String): Class[FeyGenericActor] = {
     try {
-      Utils.loadActorClassFromJar(jarLocation,classPath,jarName)
-    }catch {
+      Utils.loadActorClassFromJar(jarLocation, classPath, jarName)
+    } catch {
       case e: Exception =>
-        log.error(e,s"Could not load class $classPath from jar $jarLocation. Please, check the Jar repository path as well the jar name")
+        log.error(e, s"Could not load class $classPath from jar $jarLocation. Please, check the Jar repository path as well the jar name")
         throw e
     }
   }
 
   override val toString = {
     val ed = connectors.map(connector => {
-      s""" \t ${connector._1} : ${connector._2.mkString("[",",","]")}"""
+      s""" \t ${connector._1} : ${connector._2.mkString("[", ",", "]")}"""
     }).mkString("\n")
-    val nd = performers_metadata.map(performer => s"${performer._1}").mkString("[",",","]")
-    val actors = performer.map(actor => actor._2.path.name).mkString("["," | ","]")
+    val nd = performers_metadata.map(performer => s"${performer._1}").mkString("[", ",", "]")
+    val actors = performer.map(actor => actor._2.path.name).mkString("[", " | ", "]")
     s"Edges: \n$ed \nNodes: \n\t$nd \nPerformer \n\t$actors"
   }
 
@@ -257,7 +257,7 @@ object Ensemble {
     * @param connectors connectors json
     * @return map of connectors
     */
-  def extractConnections(connectors: List[JsObject]): Map[String,Array[String]] = {
+  def extractConnections(connectors: List[JsObject]): Map[String, Array[String]] = {
     connectors.map(connector => {
       connector.keys.map(key => {
         (key, (connector \ key).as[List[String]].toArray)
@@ -273,16 +273,16 @@ object Ensemble {
     */
   def extractPerformers(performers: List[JsObject]): Map[String, Performer] = {
     performers.map(performer => {
-      val id: String= (performer \ GUID).as[String]
+      val id: String = (performer \ GUID).as[String]
       val schedule: Int = (performer \ SCHEDULE).as[Int]
       val backoff: Int = (performer \ BACKOFF).as[Int]
       val autoScale: Int = if (performer.keys.contains(PERFORMER_AUTO_SCALE)) (performer \ PERFORMER_AUTO_SCALE).as[Int] else 0
       val jarName: String = (performer \ SOURCE \ SOURCE_NAME).as[String]
       val classPath: String = (performer \ SOURCE \ SOURCE_CLASSPATH).as[String]
-      val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
-      val controlAware:Boolean = if (performer.keys.contains(CONTROL_AWARE)) (performer \ CONTROL_AWARE).as[Boolean] else false
-      val location: String = if ( (performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION) ) CONFIG.DYNAMIC_JAR_REPO else CONFIG.JAR_REPOSITORY
-      (id, new Performer(id, jarName, classPath,params,schedule.millisecond,backoff.millisecond, autoScale,controlAware, location))
+      val params: Map[String, String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
+      val controlAware: Boolean = if (performer.keys.contains(CONTROL_AWARE)) (performer \ CONTROL_AWARE).as[Boolean] else false
+      val location: String = if ((performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION)) CONFIG.DYNAMIC_JAR_REPO else CONFIG.JAR_REPOSITORY
+      (id, new Performer(id, jarName, classPath, params, schedule.millisecond, backoff.millisecond, autoScale, controlAware, location))
     }).toMap
   }
 
@@ -292,7 +292,7 @@ object Ensemble {
     * @param params params json
     * @return map of params where key is the json key and value is the json value for the key
     */
-  private def getMapOfParams(params: JsObject):Map[String,String] = {
+  private def getMapOfParams(params: JsObject): Map[String, String] = {
     params.keys.map(key => {
       (key.toString, (params \ key).as[String])
     }).toMap
@@ -302,20 +302,22 @@ object Ensemble {
     * Message that send the START message to all of the Performers
     */
   case object STOP_PERFORMERS
+
   case object PRINT_ENSEMBLE
+
 }
 
 /**
   * Holds the performer information
   *
-  * @param uid performer uid
-  * @param jarName performer jar name
-  * @param classPath performer class path
+  * @param uid        performer uid
+  * @param jarName    performer jar name
+  * @param classPath  performer class path
   * @param parameters performer params
-  * @param schedule performer schedule interval
-  * @param backoff performer backoff interval
+  * @param schedule   performer schedule interval
+  * @param backoff    performer backoff interval
   */
 case class Performer(uid: String, jarName: String,
-                classPath: String, parameters: Map[String,String],
-                schedule: FiniteDuration, backoff: FiniteDuration,
-                autoScale: Int, controlAware: Boolean, jarLocation: String)
+                     classPath: String, parameters: Map[String, String],
+                     schedule: FiniteDuration, backoff: FiniteDuration,
+                     autoScale: Int, controlAware: Boolean, jarLocation: String)
