@@ -17,7 +17,8 @@
 
 package org.apache.iota.fey
 
-import akka.actor.Actor
+import akka.actor.{ActorContext, Actor}
+import akka.actor.Actor.Receive
 import org.apache.iota.fey.FeyCore.JSON_TREE
 import play.api.libs.json.Json
 import spray.http.MediaTypes._
@@ -27,12 +28,12 @@ class MyServiceActor extends Actor with MyService {
 
   // the HttpService trait defines only one abstract member, which
   // connects the services environment to the enclosing actor or test
-  def actorRefFactory = context
+  def actorRefFactory: ActorContext = context
 
   // this actor only runs our route, but you could add
   // other things here, like request stream processing
   // or timeout handling
-  def receive = runRoute(myRoute)
+  def receive: Receive = runRoute(myRoute)
 }
 
 sealed trait MyService extends HttpService {
@@ -43,38 +44,41 @@ sealed trait MyService extends HttpService {
   val eventsTable = path("monitoringevents")
   val test = path("test")
 
+  //Constants used
+  val SLEEP_TIME = 2000
+
   val myRoute =
     home {
       activeActors {
-        get{
+        get {
           respondWithMediaType(`text/html`) {
             complete {
               SYSTEM_ACTORS.fey ! JSON_TREE
-              Thread.sleep(2000)
+              Thread.sleep(SLEEP_TIME)
               val json = IdentifyFeyActors.generateTreeJson()
               IdentifyFeyActors.getHTMLTree(json)
             }
           }
         }
       } ~
-      actorLifecycle {
-        get{
-          respondWithMediaType(`application/json`) {
-            complete {
-              Json.stringify(Monitor.events.printWithEvents)
+        actorLifecycle {
+          get {
+            respondWithMediaType(`application/json`) {
+              complete {
+                Json.stringify(Monitor.events.printWithEvents)
+              }
             }
           }
-        }
-      } ~
+        } ~
         eventsTable {
-        get{
-          respondWithMediaType(`text/html`) {
-            complete {
-              Monitor.getHTMLevents
+          get {
+            respondWithMediaType(`text/html`) {
+              complete {
+                Monitor.getHTMLevents
+              }
             }
           }
         }
-      }
     }
 
 }

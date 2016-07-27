@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -35,7 +34,7 @@ import scala.util.Properties._
 /**
   * Basic class to be used when implementing a new JSON receiver
   */
-trait JsonReceiver extends Runnable{
+trait JsonReceiver extends Runnable {
 
   val log = LoggerFactory.getLogger(this.getClass)
 
@@ -47,7 +46,7 @@ trait JsonReceiver extends Runnable{
       while (!Thread.currentThread().isInterrupted) {
         execute()
       }
-    }catch{
+    } catch {
       case e: Exception => exceptionOnRun(e)
     }
   }
@@ -71,7 +70,7 @@ trait JsonReceiver extends Runnable{
       } else {
         true
       }
-    }catch{
+    } catch {
       case e: Exception =>
         log.error("Error while validating JSON", e)
         false
@@ -87,23 +86,23 @@ trait JsonReceiver extends Runnable{
   final def checkForLocation(json: JsValue): Unit = {
     (json \ ENSEMBLES).as[List[JsObject]].foreach(ensemble => {
       (ensemble \ PERFORMERS).as[List[JsObject]].foreach(performer => {
-        if((performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION)){
+        if ((performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION)) {
           val location = (performer \ SOURCE \ JAR_LOCATION).as[JsObject]
           val jarName = (performer \ SOURCE \ SOURCE_NAME).as[String]
           val url = (location \ JAR_LOCATION_URL).as[String].toLowerCase
-          if( (url.startsWith("https://") || url.startsWith("http://")) && !jarDownloaded(jarName)){
+          if ((url.startsWith("https://") || url.startsWith("http://")) && !jarDownloaded(jarName)) {
 
-            val credentials:Option[JsObject] = {
-              if(location.keys.contains(JAR_CREDENTIALS_URL)){
+            val credentials: Option[JsObject] = {
+              if (location.keys.contains(JAR_CREDENTIALS_URL)) {
                 Option((location \ JAR_CREDENTIALS_URL).as[JsObject])
-              }else{
+              } else {
                 None
               }
             }
 
             downloadJAR(url, jarName, credentials)
           }
-        }else{
+        } else {
           log.debug("Location not defined in JSON")
         }
       })
@@ -119,7 +118,7 @@ trait JsonReceiver extends Runnable{
   private final def jarDownloaded(jarName: String): Boolean = {
     try {
       Files.exists(Paths.get(s"${CONFIG.DYNAMIC_JAR_REPO}/$jarName"))
-    }catch{
+    } catch {
       case e: Exception =>
         log.error(s"Could not check if $jarName exists", e)
         true
@@ -127,26 +126,26 @@ trait JsonReceiver extends Runnable{
   }
 
   private final def downloadJAR(url: String, jarName: String, credentials: Option[JsObject]): Unit = {
-    var outputStream: FileOutputStream = null
-    try{
+    var outputStream: FileOutputStream = CONSTANTS.NULL
+    try {
       log.info(s"Downloading $jarName from $url")
 
       val connection = new URL(s"$url/$jarName").openConnection
 
-      resolveCredentials(credentials) match{
-        case Some(userpass) =>
-          connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION, HttpBasicAuth.getHeader(userpass._1, userpass._2))
+      resolveCredentials(credentials) match {
+        case Some(userPassword) =>
+          connection.setRequestProperty(HttpBasicAuth.AUTHORIZATION, HttpBasicAuth.getHeader(userPassword._1, userPassword._2))
         case None =>
       }
 
       // Download Jar
       outputStream = new FileOutputStream(s"${CONFIG.DYNAMIC_JAR_REPO}/$jarName")
-      IOUtils.copy(connection.getInputStream,outputStream)
+      IOUtils.copy(connection.getInputStream, outputStream)
       outputStream.close()
 
-    }catch{
+    } catch {
       case e: Exception =>
-        if(outputStream != null) {
+        if (Option(outputStream).isDefined) {
           outputStream.close()
           (new File(s"${CONFIG.DYNAMIC_JAR_REPO}/$jarName")).delete()
         }
@@ -157,16 +156,17 @@ trait JsonReceiver extends Runnable{
   /**
     * Tries to resolve the credentials looking to the environment variable
     * If it is not possible to find a env var with that name, then use the name itself
+    *
     * @param credentials
     * @return (user, password)
     */
-  def resolveCredentials(credentials: Option[JsObject]):Option[(String, String)] = {
+  def resolveCredentials(credentials: Option[JsObject]): Option[(String, String)] = {
     credentials match {
       case None => None
       case Some(cred) =>
         val user = (cred \ JAR_CRED_USER).as[String]
         val password = (cred \ JAR_CRED_PASSWORD).as[String]
-        Option(envOrElse(user,user), envOrElse(password,password))
+        Option(envOrElse(user, user), envOrElse(password, password))
     }
   }
 

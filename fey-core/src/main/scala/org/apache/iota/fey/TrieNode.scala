@@ -24,116 +24,116 @@ import scala.collection.mutable.ArrayBuffer
 
 /**
   * Trie data structure used to create actors hierarchy in Fey
- */
-case class TrieNode(path: String, children: ArrayBuffer[TrieNode], events:ArrayBuffer[Monitor.MonitorEvent])
+  */
+case class TrieNode(path: String, children: ArrayBuffer[TrieNode], events: ArrayBuffer[Monitor.MonitorEvent])
 
-protected class Trie(systemName: String){
+protected class Trie(systemName: String) {
 
   private val root: TrieNode = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty)
   var elements: Int = 0
 
-  def append(path: String, event: Monitor.MonitorEvent = null): Unit = {
-    append(path.replaceFirst("akka://","").split("/"),root,1,event)
+  def append(path: String, event: Monitor.MonitorEvent = CONSTANTS.NULL): Unit = {
+    append(path.replaceFirst("akka://", "").split("/"), root, 1, event)
   }
 
   @tailrec private def append(path: Array[String], root: TrieNode, index: Int, event: Monitor.MonitorEvent): Unit = {
-    if(root != null && index < path.length){
+    if (Option(root).isDefined && index < path.length) {
       var nextRoot = root.children.filter(child => child.path == path(index))
-      if(nextRoot.isEmpty){
+      if (nextRoot.isEmpty) {
         nextRoot = ArrayBuffer(TrieNode(path(index), ArrayBuffer.empty, ArrayBuffer.empty))
         root.children += nextRoot(0)
         elements += 1
       }
-      if(event != null && index == path.length - 1){
+      if (Option(event).isDefined && index == path.length - 1) {
         nextRoot(0).events += event
       }
-      append(path, nextRoot(0),index+1, event)
+      append(path, nextRoot(0), index + 1, event)
     }
   }
 
   def hasPath(path: String): Boolean = {
-    recHasPath(root, path.replaceFirst("akka://","").split("/"),1)
+    recHasPath(root, path.replaceFirst("akka://", "").split("/"), 1)
   }
 
   @tailrec private def recHasPath(root: TrieNode, path: Array[String], index: Int): Boolean = {
-    if(root != null && index < path.length) {
-      var nextRoot = root.children.filter(child => child.path == path(index))
-      if(nextRoot.isEmpty){
+    if (Option(root).isDefined && index < path.length) {
+      val nextRoot = root.children.filter(child => child.path == path(index))
+      if (nextRoot.isEmpty) {
         false
-      }else{
+      } else {
         recHasPath(nextRoot(0), path, index + 1)
       }
-    }else{
+    } else {
       true
     }
   }
 
   def getNode(path: String): Option[TrieNode] = {
-    recGetNode(root, path.replaceFirst("akka://","").split("/"),1)
+    recGetNode(root, path.replaceFirst("akka://", "").split("/"), 1)
   }
 
-  @tailrec private def recGetNode(root: TrieNode, path: Array[String], index: Int): Option[TrieNode]= {
-    if(root != null && index < path.length) {
-      var nextRoot = root.children.filter(child => child.path == path(index))
-      if(nextRoot.isEmpty){
+  @tailrec private def recGetNode(root: TrieNode, path: Array[String], index: Int): Option[TrieNode] = {
+    if (Option(root).isDefined && index < path.length) {
+      val nextRoot = root.children.filter(child => child.path == path(index))
+      if (nextRoot.isEmpty) {
         None
-      }else{
-        if(path.length - 1 == index){
-            Some(nextRoot(0))
-        }else {
+      } else {
+        if (path.length - 1 == index) {
+          Some(nextRoot(0))
+        } else {
           recGetNode(nextRoot(0), path, index + 1)
         }
       }
-    }else{
+    } else {
       None
     }
   }
 
   def removeAllNodes(): Unit = {
     var index = 0
-    while(index < root.children.length){
+    while (index < root.children.length) {
       root.children.remove(index)
       index += 1
     }
     elements = 0
   }
 
-  def print:JsValue = {
-    getObject(root, null)
+  def print: JsValue = {
+    getObject(root, CONSTANTS.NULL)
   }
 
-  def printWithEvents:JsValue = {
-    getObjectEvent(root, null)
+  def printWithEvents: JsValue = {
+    getObjectEvent(root, CONSTANTS.NULL)
   }
 
-  def getRootChildren():ArrayBuffer[TrieNode] = {
+  def getRootChildren(): ArrayBuffer[TrieNode] = {
     root.children
   }
 
-  private def getObject(root: TrieNode, parent: TrieNode):JsObject = {
-    if(root != null) {
-     Json.obj("name" -> root.path,
-       "parent" -> (if(parent != null) parent.path else "null"),
+  private def getObject(root: TrieNode, parent: TrieNode): JsObject = {
+    if (Option(root).isDefined) {
+      Json.obj("name" -> root.path,
+        "parent" -> (if (Option(parent).isDefined) parent.path else "null"),
         "children" -> root.children.map(getObject(_, root))
-     )
-    }else{
+      )
+    } else {
       Json.obj()
     }
   }
 
-  private def getObjectEvent(root: TrieNode, parent: TrieNode):JsObject = {
-    if(root != null) {
+  private def getObjectEvent(root: TrieNode, parent: TrieNode): JsObject = {
+    if (Option(root).isDefined) {
       Json.obj("name" -> root.path,
-        "parent" -> (if(parent != null) parent.path else "null"),
+        "parent" -> (if (Option(parent).isDefined) parent.path else "null"),
         "events" -> root.events.map(event => {
           Json.obj("type" -> event.event,
-          "timestamp" -> event.timestamp,
+            "timestamp" -> event.timestamp,
             "info" -> event.info
           )
         }),
         "children" -> root.children.map(getObjectEvent(_, root))
       )
-    }else{
+    } else {
       Json.obj()
     }
   }

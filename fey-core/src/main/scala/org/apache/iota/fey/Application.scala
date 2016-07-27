@@ -28,31 +28,35 @@ import scala.concurrent.duration._
 
 object Application extends App {
 
-  CONFIG.loadUserConfiguration(if(args.length == 1) args(0) else "")
+  CONFIG.loadUserConfiguration(if (args.length == 1) args(0) else "")
 
   SYSTEM_ACTORS
 
 }
 
-object FEY_SYSTEM{
+object FEY_SYSTEM {
   implicit val system = ActorSystem("FEY-MANAGEMENT-SYSTEM")
 }
 
-object SYSTEM_ACTORS{
+object SYSTEM_ACTORS {
 
   import FEY_SYSTEM._
+
+  val PORT_NUMBER = 16666
+  val TIMEOUT = 800
 
   val fey = system.actorOf(FeyCore.props, name = "FEY-CORE")
   fey ! FeyCore.START
 
   val service = system.actorOf(Props[MyServiceActor], name = "FEY_REST_API")
 
-  implicit val timeout = Timeout(800.seconds)
-  IO(Http) ? Http.Bind(SYSTEM_ACTORS.service, interface = "0.0.0.0", port = 16666)
+  implicit val timeout = Timeout(TIMEOUT.seconds)
+  IO(Http) ? Http.Bind(SYSTEM_ACTORS.service, interface = "0.0.0.0", port = PORT_NUMBER)
 
 }
 
-object FEY_MONITOR{
+object FEY_MONITOR {
+
   import FEY_SYSTEM._
 
   val actorRef = system.actorOf(Props(new Monitor(Monitor.events)), "FEY-MONITOR")

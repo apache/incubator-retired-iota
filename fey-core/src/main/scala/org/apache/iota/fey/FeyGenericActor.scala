@@ -25,31 +25,32 @@ import scala.concurrent.ExecutionContext.Implicits.global
 
 /**
   * Defines the generic actor for Fey integration
-  * @param params Map of key value pairs that will be used to configure the actor
-  * @param backoff Backoff interval
-  * @param connectTo List of ActorRef that are connected to this actor
-  *                  (If this actor is A, and it is connect to B and C, so the network would be A -> B,C)
+  *
+  * @param params                Map of key value pairs that will be used to configure the actor
+  * @param backoff               Backoff interval
+  * @param connectTo             List of ActorRef that are connected to this actor
+  *                              (If this actor is A, and it is connect to B and C, so the network would be A -> B,C)
   * @param schedulerTimeInterval When this value is different of zero,
   *                              a scheduler will be started calling the execute method
   * @param orchestrationName
   * @param orchestrationID
   */
-abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
+abstract class FeyGenericActor(val params: Map[String, String] = Map.empty,
                                val backoff: FiniteDuration = 1.minutes,
-                               val connectTo: Map[String,ActorRef] = Map.empty,
+                               val connectTo: Map[String, ActorRef] = Map.empty,
                                val schedulerTimeInterval: FiniteDuration = 2.seconds,
                                val orchestrationName: String = "",
                                val orchestrationID: String = "",
                                val autoScale: Boolean = false)
 
-  extends Actor with ActorLogging{
+  extends Actor with ActorLogging {
 
   import FeyGenericActor._
 
   /**
     * Keeps reference to the cancellable
     */
-  @volatile private var scheduler: Cancellable = null
+  @volatile private var scheduler: Cancellable = CONSTANTS.NULL
   @volatile private var endBackoff: Long = 0
   private[fey] val monitoring_actor = FEY_MONITOR.actorRef
 
@@ -62,7 +63,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
       context.stop(self)
 
     case PROCESS(message) =>
-      if(System.nanoTime() >= endBackoff) {
+      if (System.nanoTime() >= endBackoff) {
         processMessage(message, sender())
       }
     // In case
@@ -83,20 +84,20 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
   }
 
   override final def preStart(): Unit = {
-    monitoring_actor  ! Monitor.START(Utils.getTimestamp, startMonitorInfo)
+    monitoring_actor ! Monitor.START(Utils.getTimestamp, startMonitorInfo)
     onStart()
     startScheduler()
   }
 
   override final def postStop(): Unit = {
-    monitoring_actor  ! Monitor.STOP(Utils.getTimestamp, stopMonitorInfo)
+    monitoring_actor ! Monitor.STOP(Utils.getTimestamp, stopMonitorInfo)
     log.info(s"STOPPED actor ${self.path.name}")
     stopScheduler()
     onStop()
   }
 
   override final def postRestart(reason: Throwable): Unit = {
-    monitoring_actor  ! Monitor.RESTART(reason, Utils.getTimestamp)
+    monitoring_actor ! Monitor.RESTART(reason, Utils.getTimestamp)
     log.info(s"RESTARTED Actor ${self.path.name}")
     preStart()
     onRestart(reason)
@@ -110,11 +111,12 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * Stops the scheduler
     */
   private final def stopScheduler() = {
-    if (scheduler != null) {
+    if (Option(scheduler).isDefined) {
       scheduler.cancel()
-      scheduler = null
+      scheduler = CONSTANTS.NULL
     }
   }
+
   /**
     * Enables the backoff.
     * Actor will drop the PROCESS messages that are sent during the backoff period time.
@@ -128,11 +130,11 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * The time interval to be used is the one passed to the constructor
     */
   private final def startScheduler() = {
-    if(scheduler == null && schedulerTimeInterval.toNanos != 0){
-      scheduler = context.system.scheduler.schedule(1.seconds, schedulerTimeInterval){
-        try{
+    if (Option(scheduler).isEmpty && schedulerTimeInterval.toNanos != 0) {
+      scheduler = context.system.scheduler.schedule(1.seconds, schedulerTimeInterval) {
+        try {
           execute()
-        }catch{
+        } catch {
           case e: Exception => self ! EXCEPTION(e)
         }
       }
@@ -141,23 +143,26 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   /**
     * Check state of scheduler
+    *
     * @return true if scheduller is running
     */
-  final def isShedulerRunning():Boolean = {
-    if(scheduler != null && !scheduler.isCancelled){
+  final def isShedulerRunning(): Boolean = {
+    if (Option(scheduler).isDefined && !scheduler.isCancelled) {
       true
-    }else{
+    } else {
       false
     }
   }
 
   /**
     * get endBackoff
+    *
     * @return
     */
   final def getEndBackoff(): Long = {
     endBackoff
   }
+
   /**
     * Called by the scheduler.
     */
@@ -169,6 +174,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * Called every time actors receives the PROCESS message.
     * The default implementation propagates the message to the connected actors
     * and fires up the backoff
+    *
     * @param message message to be processed
     * @tparam T Any
     */
@@ -219,15 +225,17 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   /**
     * Used to set a info message when sending Stop monitor events
+    *
     * @return String info
     */
-  def stopMonitorInfo:String = "Stopped"
+  def stopMonitorInfo: String = "Stopped"
 
   /**
     * Used to set a info message when sending Start monitor events
+    *
     * @return String info
     */
-  def startMonitorInfo:String = "Started"
+  def startMonitorInfo: String = "Started"
 
 }
 
@@ -235,7 +243,7 @@ object FeyGenericActor {
 
   /**
     * Stops the actor
-   */
+    */
   case object STOP
 
   /**
