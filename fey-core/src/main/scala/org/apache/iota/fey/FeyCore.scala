@@ -101,6 +101,7 @@ protected class FeyCore extends Actor with ActorLogging{
     monitoring_actor ! Monitor.TERMINATE(actorRef.path.toString, Utils.getTimestamp)
     log.info(s"TERMINATED ${actorRef.path.name}")
     FEY_CACHE.activeOrchestrations.remove(actorRef.path.name)
+    ORCHESTRATION_CACHE.orchestration_metadata.remove(actorRef.path.name)
     if(!FEY_CACHE.orchestrationsAwaitingTermination.isEmpty) {
       checkForOrchestrationWaitingForTermination(actorRef.path.name)
     }
