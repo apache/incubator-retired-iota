@@ -104,6 +104,7 @@ protected class Orchestration(val name: String,
   private def replayOrchestrationState() = {
     val ensemblesSpec = ORCHESTRATION_CACHE.orchestration_metadata.get(guid).get.map(_._2).toList
     ORCHESTRATION_CACHE.orchestration_metadata.remove(guid)
+    ORCHESTRATION_CACHE.orchestration_name.remove(guid)
     self ! CREATE_ENSEMBLES(ensemblesSpec)
   }
 
@@ -155,6 +156,7 @@ protected class Orchestration(val name: String,
       case None =>
       case Some(ensembles) =>
         ORCHESTRATION_CACHE.orchestration_metadata.put(guid, (ensembles -- ids))
+        ORCHESTRATION_CACHE.orchestration_name.put(guid, name)
     }
     Utils.updateOrchestrationState(guid)
   }
@@ -187,6 +189,7 @@ protected class Orchestration(val name: String,
       case Some(cachedEnsemble) =>
         ORCHESTRATION_CACHE.orchestration_metadata.put(guid, cachedEnsemble ++ (newEnsembles.map(ensemble => (ensemble._1, ensemble._3)).toMap))
     }
+    ORCHESTRATION_CACHE.orchestration_name.put(guid, name)
     Utils.updateOrchestrationState(guid)
   }
 
@@ -246,4 +249,5 @@ protected object ORCHESTRATION_CACHE{
     * Value = Map[Ensemble GUID, JsObject of the ensemble]
     */
   val orchestration_metadata: HashMap[String, Map[String,JsObject]] = HashMap.empty[String, Map[String,JsObject]]
+  val orchestration_name: HashMap[String, String] = HashMap.empty
 }
