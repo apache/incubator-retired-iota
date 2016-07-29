@@ -70,7 +70,15 @@ sealed trait MyService extends HttpService {
         get{
           respondWithMediaType(`text/html`) {
             complete {
-              Monitor.getHTMLevents
+              try {
+                if(CONFIG.MONITORING_TYPE == "COMPLETE") {
+                  Monitor.getHTMLevents
+                }else{
+                  Monitor.getSimpleHTMLEvents
+                }
+              }catch {
+                case e: Exception => ""
+              }
             }
           }
         }

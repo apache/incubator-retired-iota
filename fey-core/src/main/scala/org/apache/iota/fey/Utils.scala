@@ -217,6 +217,8 @@ object CONFIG{
   var DYNAMIC_JAR_REPO = ""
   var DYNAMIC_JAR_FORCE_PULL = false
   var CUSTOM_DISPATCHERS: ConfigValue = null
+  var MONITORING_ENABLED: Boolean = true
+  var MONITORING_TYPE: String = "COMPLETE"
 
   def loadUserConfiguration(path: String) : Unit = {
 
@@ -230,17 +232,19 @@ object CONFIG{
       }
     }.getConfig("fey-global-configuration").resolve()
 
-      CHECKPOINT_DIR = app.getString("checkpoint-directory")
-      JSON_REPOSITORY = app.getString("json-repository")
-      JSON_EXTENSION = app.getString("json-extension")
-      JAR_REPOSITORY = app.getString("jar-repository")
-      CHEKPOINT_ENABLED = app.getBoolean("enable-checkpoint")
-      LOG_LEVEL = app.getString("log-level").toUpperCase()
-      LOG_APPENDER = app.getString("log-appender").toUpperCase()
-      MESSAGES_PER_RESIZE = app.getInt("auto-scale.messages-per-resize")
-      DYNAMIC_JAR_REPO = app.getString("dynamic-jar-population.downloaded-repository")
-      DYNAMIC_JAR_FORCE_PULL = app.getBoolean("dynamic-jar-population.force-pull")
-      CUSTOM_DISPATCHERS = app.getValue("custom-dispatchers")
+    CHECKPOINT_DIR = app.getString("checkpoint-directory")
+    JSON_REPOSITORY = app.getString("json-repository")
+    JSON_EXTENSION = app.getString("json-extension")
+    JAR_REPOSITORY = app.getString("jar-repository")
+    CHEKPOINT_ENABLED = app.getBoolean("enable-checkpoint")
+    LOG_LEVEL = app.getString("log-level").toUpperCase()
+    LOG_APPENDER = app.getString("log-appender").toUpperCase()
+    MESSAGES_PER_RESIZE = app.getInt("auto-scale.messages-per-resize")
+    DYNAMIC_JAR_REPO = app.getString("dynamic-jar-population.downloaded-repository")
+    DYNAMIC_JAR_FORCE_PULL = app.getBoolean("dynamic-jar-population.force-pull")
+    CUSTOM_DISPATCHERS = app.getValue("custom-dispatchers")
+    MONITORING_ENABLED = app.getBoolean("monitoring.enable")
+    MONITORING_TYPE = app.getString("monitoring.type").toUpperCase()
 
     setLogbackConfiguration()
   }

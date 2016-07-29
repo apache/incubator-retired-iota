@@ -32,12 +32,22 @@ protected class Monitor(eventsStore: Trie) extends Actor {
   val log: DiagnosticLoggingAdapter = Logging(this)
   log.mdc(Map("fileName" -> "monitor_events"))
 
+
+  override def preStart(): Unit = {
+    if(CONFIG.MONITORING_ENABLED) {
+      if (CONFIG.MONITORING_TYPE == "SIMPLE") {
+        context.become(simple)
+      } else {
+        context.become(complete)
+      }
+    }
+  }
+
   override def postStop(): Unit = {
     log.clearMDC()
   }
 
-  override def receive: Receive = {
-
+  private def complete: Receive = {
     case START(timestamp, info) =>
       logInfo(sender().path.toString, EVENTS.START, timestamp, info)
       eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.START, timestamp, info))
@@ -53,7 +63,28 @@ protected class Monitor(eventsStore: Trie) extends Actor {
     case TERMINATE(actorPath, timestamp, info) =>
       logInfo(actorPath, EVENTS.TERMINATE, timestamp, info)
       eventsStore.append(actorPath,MonitorEvent(EVENTS.TERMINATE, timestamp, info))
+  }
 
+  private def simple: Receive = {
+    case START(timestamp, info) =>
+      logInfo(sender().path.toString, EVENTS.START, timestamp, info)
+      Monitor.simpleEvents.put(sender().path.toString, ('S',timestamp))
+
+    case STOP(timestamp, info) =>
+      logInfo(sender().path.toString, EVENTS.STOP, timestamp, info)
+      Monitor.simpleEvents.put(sender().path.toString, ('O',timestamp))
+
+    case RESTART(reason, timestamp) =>
+      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
+      Monitor.simpleEvents.put(sender().path.toString, ('R',timestamp))
+
+    case TERMINATE(actorPath, timestamp, info) =>
+      logInfo(actorPath, EVENTS.TERMINATE, timestamp, info)
+      Monitor.simpleEvents.put(actorPath, ('T',timestamp))
+  }
+
+  override def receive: Receive = {
+    case _ =>
   }
 
   def logInfo(path:String, event:String, timestamp: Long, info:String, reason:Throwable = null) = {
@@ -80,6 +111,7 @@ protected object Monitor{
     * Contains the lifecycle events for actors in Fey
     */
   val events: Trie = new Trie("FEY-MANAGEMENT-SYSTEM")
+  val simpleEvents:scala.collection.mutable.HashMap[String,(Char, Long)] = scala.collection.mutable.HashMap.empty
 
   //Static HTML content from d3
   val html = scala.io.Source.fromInputStream(getClass.getResourceAsStream("/eventsTable.html"), "UTF-8")
@@ -98,6 +130,18 @@ protected object Monitor{
       })
       mapEventsToRows(actor.children, currentPath) ++ events
     }).flatten
+  }
+
+  def getSimpleHTMLEvents: String = {
+    val content = simpleEvents.map(event => {
+      event._2._1 match {
+        case 'S' => getTableLine(event._1, event._2._2, "START", "")
+        case 'O' => getTableLine(event._1, event._2._2, "STOP", "")
+        case 'R' => getTableLine(event._1, event._2._2, "RESTART", "")
+        case 'T' => getTableLine(event._1, event._2._2, "TERMINATE", "")
+      }
+    }).mkString("\n")
+    html.replace("$EVENTS_TABLE_CONTENT", content)
   }
 
   private def getTableLine(path: String,timestamp: Long, event: String, info: String):String = {
