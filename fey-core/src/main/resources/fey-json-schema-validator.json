@@ -32,6 +32,9 @@
           "controlAware":{
             "type":"boolean"
           },
+          "dispatcher":{
+            "type": "string"
+          },
           "autoScale":{
             "type":"integer",
             "minimum":0

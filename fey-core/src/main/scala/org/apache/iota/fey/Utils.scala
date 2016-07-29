@@ -25,7 +25,7 @@ import ch.qos.logback.classic.{Level, Logger, LoggerContext}
 import ch.qos.logback.core.joran.spi.JoranException
 import ch.qos.logback.core.util.StatusPrinter
 import com.eclipsesource.schema.SchemaType
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{Config, ConfigFactory, ConfigValue}
 import org.slf4j.LoggerFactory
 import play.api.libs.json.{JsObject, JsValue, Json}
 
@@ -195,6 +195,7 @@ object JSON_PATH{
   val JAR_CREDENTIALS_URL = "credentials"
   val JAR_CRED_USER = "user"
   val JAR_CRED_PASSWORD = "password"
+  val PERFORMER_DISPATCHER = "dispatcher"
 }
 
 object CONFIG{
@@ -215,6 +216,7 @@ object CONFIG{
   var MESSAGES_PER_RESIZE:Int = 500
   var DYNAMIC_JAR_REPO = ""
   var DYNAMIC_JAR_FORCE_PULL = false
+  var CUSTOM_DISPATCHERS: ConfigValue = null
 
   def loadUserConfiguration(path: String) : Unit = {
 
@@ -238,8 +240,14 @@ object CONFIG{
       MESSAGES_PER_RESIZE = app.getInt("auto-scale.messages-per-resize")
       DYNAMIC_JAR_REPO = app.getString("dynamic-jar-population.downloaded-repository")
       DYNAMIC_JAR_FORCE_PULL = app.getBoolean("dynamic-jar-population.force-pull")
+      CUSTOM_DISPATCHERS = app.getValue("custom-dispatchers")
 
     setLogbackConfiguration()
+  }
+
+  def getDispatcherForAkka():Config = {
+    val config = ConfigFactory.parseString("")
+    config.withValue("fey-custom-dispatchers", CUSTOM_DISPATCHERS)
   }
 
   /**

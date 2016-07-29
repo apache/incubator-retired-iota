@@ -205,16 +205,22 @@ protected class Ensemble(val orchestrationID: String,
     val clazz = loadClazzFromJar(performerInfo.classPath, s"${performerInfo.jarLocation}/${performerInfo.jarName}", performerInfo.jarName)
 
     val autoScale = if(performerInfo.autoScale > 0) true else false
+    val dispatcher = if(performerInfo.dispatcher != "") s"fey-custom-dispatchers.${performerInfo.dispatcher}" else ""
 
     val actorProps = Props(clazz,
       performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, autoScale)
 
-    if(performerInfo.controlAware){
+    // dispatcher has higher priority than controlAware. That means that if both are defined
+    // then the custom dispatcher will be used
+    if(dispatcher != ""){
+      log.info(s"Using dispatcher: $dispatcher")
+      actorProps.withDispatcher(dispatcher)
+    }
+    else if(performerInfo.controlAware){
       actorProps.withDispatcher(CONFIG.CONTROL_AWARE_MAILBOX)
     }else{
       actorProps
     }
-
   }
 
   /**
@@ -282,7 +288,9 @@ object Ensemble {
       val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
       val controlAware:Boolean = if (performer.keys.contains(CONTROL_AWARE)) (performer \ CONTROL_AWARE).as[Boolean] else false
       val location: String = if ( (performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION) ) CONFIG.DYNAMIC_JAR_REPO else CONFIG.JAR_REPOSITORY
-      (id, new Performer(id, jarName, classPath,params,schedule.millisecond,backoff.millisecond, autoScale,controlAware, location))
+      val dispatcher: String = if (performer.keys.contains(PERFORMER_DISPATCHER)) (performer \ PERFORMER_DISPATCHER).as[String] else ""
+
+      (id, new Performer(id, jarName, classPath, params, schedule.millisecond, backoff.millisecond, autoScale,controlAware, location, dispatcher))
     }).toMap
   }
 
@@ -314,8 +322,12 @@ object Ensemble {
   * @param parameters performer params
   * @param schedule performer schedule interval
   * @param backoff performer backoff interval
+  * @param autoScale if actor was started as a router and can autoscala
+  * @param controlAware if the actor uses a controlAware mailbox
+  * @param jarLocation download jar
+  * @param dispatcher Akka dispatcher that the actor is using
   */
 case class Performer(uid: String, jarName: String,
                 classPath: String, parameters: Map[String,String],
                 schedule: FiniteDuration, backoff: FiniteDuration,
-                autoScale: Int, controlAware: Boolean, jarLocation: String)
+                autoScale: Int, controlAware: Boolean, jarLocation: String, dispatcher: String)

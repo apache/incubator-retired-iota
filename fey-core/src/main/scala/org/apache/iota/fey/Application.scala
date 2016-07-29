@@ -35,7 +35,7 @@ object Application extends App {
 }
 
 object FEY_SYSTEM{
-  implicit val system = ActorSystem("FEY-MANAGEMENT-SYSTEM")
+  implicit val system = ActorSystem("FEY-MANAGEMENT-SYSTEM", CONFIG.getDispatcherForAkka().withFallback(ConfigFactory.load()))
 }
 
 object SYSTEM_ACTORS{
