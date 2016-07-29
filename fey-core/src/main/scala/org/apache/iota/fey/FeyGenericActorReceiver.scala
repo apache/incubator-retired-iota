@@ -42,7 +42,9 @@ abstract class FeyGenericActorReceiver(override val params: Map[String,String] =
   override final def processMessage[T](message: T, sender: ActorRef): Unit = {
     try {
       val jsonString = getJSONString(message)
-      processJson(jsonString)
+      if(jsonString != "{}") {
+        processJson(jsonString)
+      }
       startBackoff()
     }catch{
       case e: Exception => log.error(e, s"Could not process message $message")

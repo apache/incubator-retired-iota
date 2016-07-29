@@ -145,7 +145,7 @@ protected object Utils {
               val ensembleJSON = metadata.map(ensenble => ensenble._2)
 
               val orchestrationSpec = Json.obj(JSON_PATH.GUID -> orchestrationID,
-                JSON_PATH.COMMAND -> "CREATE",
+                JSON_PATH.COMMAND -> "RECREATE",
                 JSON_PATH.ORCHESTRATION_NAME -> "I DONT KNOW HOW TO SAVE IT YET =P",
                 JSON_PATH.ORCHESTRATION_TIMESTAMP -> System.currentTimeMillis.toString,
                 JSON_PATH.ENSEMBLES -> ensembleJSON
