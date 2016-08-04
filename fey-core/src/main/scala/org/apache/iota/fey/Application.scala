@@ -42,13 +42,15 @@ object SYSTEM_ACTORS{
 
   import FEY_SYSTEM._
 
-  val fey = system.actorOf(FeyCore.props, name = "FEY-CORE")
+  val fey = system.actorOf(Props[FeyCore], name = "FEY-CORE")
   fey ! FeyCore.START
 
+  val config = ConfigFactory.load()
   val service = system.actorOf(Props[MyServiceActor], name = "FEY_REST_API")
-
+  val server_ip = config.getString("http_server.server_ip")
+  val server_port = config.getInt("http_server.server_port")
   implicit val timeout = Timeout(800.seconds)
-  IO(Http) ? Http.Bind(SYSTEM_ACTORS.service, interface = "0.0.0.0", port = 16666)
+  IO(Http) ? Http.Bind(SYSTEM_ACTORS.service, interface = server_ip, port = server_port)
 
 }
 
