@@ -166,7 +166,7 @@ trait JsonReceiver extends Runnable{
       case Some(cred) =>
         val user = (cred \ JAR_CRED_USER).as[String]
         val password = (cred \ JAR_CRED_PASSWORD).as[String]
-        Option(envOrElse(user,user), envOrElse(password,password))
+        Option((envOrElse(user,user), envOrElse(password,password)))
     }
   }
 
