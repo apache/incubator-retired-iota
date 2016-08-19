@@ -63,7 +63,9 @@ protected class FeyCore extends Actor with ActorLogging{
 
     case STOP_EMPTY_ORCHESTRATION(orchID) =>
       log.warning(s"Deleting Empty Orchestration $orchID")
-      deleteOrchestration(orchID)
+      /* In most of the cases, this message will represent an orchestration that failed
+       * In this case, we don't want to remove it from the checkpoint dir */
+      deleteOrchestration(orchID, false)
 
     case Terminated(actor) => processTerminatedMessage(actor)
 
@@ -160,7 +162,7 @@ protected class FeyCore extends Actor with ActorLogging{
       case "RECREATE" => recreateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
       case "CREATE" => createOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
       case "UPDATE" => updateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
-      case "DELETE" => deleteOrchestration(orchestrationID)
+      case "DELETE" => deleteOrchestration(orchestrationID,true)
       case x => throw new CommandNotRecognized(s"Command: $x")
     }
   }
@@ -186,7 +188,7 @@ protected class FeyCore extends Actor with ActorLogging{
           if(orchestration._1 != orchestrationTimestamp){
             val orchestrationInfo = new OrchestrationInformation(ensemblesSpecJson,orchestrationID,orchestrationName,orchestrationTimestamp)
             FEY_CACHE.orchestrationsAwaitingTermination.put(orchestrationID, orchestrationInfo)
-            deleteOrchestration(orchestrationID)
+            deleteOrchestration(orchestrationID, true)
           }else{
             log.warning(s"Orchestration ${orchestrationID} not recreated. Timestamp did not change.")
           }
@@ -254,13 +256,15 @@ protected class FeyCore extends Actor with ActorLogging{
     * @param orchestrationID
     * @return
     */
-  private def deleteOrchestration(orchestrationID: String) = {
+  private def deleteOrchestration(orchestrationID: String, updateCheckpoint: Boolean) = {
     try{
       FEY_CACHE.activeOrchestrations.get(orchestrationID) match {
         case Some(orchestration) =>
           orchestration._2 ! PoisonPill
           FEY_CACHE.activeOrchestrations.remove(orchestrationID)
-          updateOrchestrationState(orchestrationID,true)
+          if(updateCheckpoint) {
+            updateOrchestrationState(orchestrationID, true)
+          }
         case None =>
           log.warning(s"No active Orchestration $orchestrationID to be deleted")
       }
