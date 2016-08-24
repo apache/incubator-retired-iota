@@ -28,36 +28,23 @@
         </encoder>
     </appender>
 
-    <appender name="FEY-FILE" class="ch.qos.logback.classic.sift.SiftingAppender">
+    <!-- Fey core -->
+    <appender name="FEY-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <append>true</append>
+        <file>${LOG_HOME}/fey_core.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- daily rollover. Make sure the path matches the one in the file element or else
+             the rollover logs are placed in the working directory. -->
+            <fileNamePattern>${LOG_HOME}/fey_core-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+            <maxFileSize>1MB</maxFileSize>
+            <maxHistory>30</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
 
-        <!-- MDC value -->
-        <discriminator>
-            <key>fileName</key>
-            <defaultValue>fey_core</defaultValue>
-        </discriminator>
-
-        <sift>
-            <!-- Fey core -->
-            <appender name="FEY-FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-                <append>true</append>
-                <file>${LOG_HOME}/${fileName}.log</file>
-                <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
-                    <!-- daily rollover. Make sure the path matches the one in the file element or else
-                     the rollover logs are placed in the working directory. -->
-                    <fileNamePattern>${LOG_HOME}/${fileName}-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-                    <maxFileSize>1MB</maxFileSize>
-                    <maxHistory>30</maxHistory>
-                    <totalSizeCap>1GB</totalSizeCap>
-                </rollingPolicy>
-
-                <encoder>
-                    <charset>UTF-8</charset>
-                    <pattern>[%p] [%d{yy/MM/dd HH:mm:ss}] %c [%X{akkaSource}] : %msg%n</pattern>
-                </encoder>
-            </appender>
-
-        </sift>
-
+        <encoder>
+            <charset>UTF-8</charset>
+            <pattern>[%p] [%d{yy/MM/dd HH:mm:ss}] %c [%X{akkaSource}] : %msg%n</pattern>
+        </encoder>
     </appender>
 
     <root level="INFO">

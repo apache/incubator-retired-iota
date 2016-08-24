@@ -17,7 +17,7 @@
 
 package org.apache.iota.fey
 
-import akka.actor.Actor
+import akka.actor.{Actor, ActorLogging}
 import akka.event.{DiagnosticLoggingAdapter, Logging}
 
 import scala.collection.mutable.ArrayBuffer
@@ -25,12 +25,12 @@ import scala.collection.mutable.ArrayBuffer
 /**
   * Created by barbaragomes on 7/8/16.
   */
-protected class Monitor(eventsStore: Trie) extends Actor {
+protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
 
   import Monitor._
 
-  val log: DiagnosticLoggingAdapter = Logging(this)
-  log.mdc(Map("fileName" -> "monitor_events"))
+  //val log: DiagnosticLoggingAdapter = Logging(this)
+  //log.mdc(Map("fileName" -> "monitor_events"))
 
 
   override def preStart(): Unit = {
@@ -44,7 +44,7 @@ protected class Monitor(eventsStore: Trie) extends Actor {
   }
 
   override def postStop(): Unit = {
-    log.clearMDC()
+    //log.clearMDC()
   }
 
   private def complete: Receive = {
