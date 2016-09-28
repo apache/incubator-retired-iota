@@ -33,6 +33,7 @@ object Dependencies {
   val typesafe_config = "com.typesafe"        %  "config"                     % "1.3.0"
 
   val playJson        = "com.typesafe.play"   %% "play-json"                  % "2.5.3"
+  val playNetty = "com.typesafe.play" %% "play-netty-server" % "2.5.3"
   val jsonValidator   = "com.eclipsesource"   %% "play-json-schema-validator" % "0.7.0"
 
   //Logger
