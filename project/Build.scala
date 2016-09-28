@@ -17,6 +17,7 @@
 
 import sbt._
 import sbt.Keys._
+import sbtassembly.AssemblyPlugin.autoImport._
 
 object ModuleDependencies {
 
@@ -53,22 +54,24 @@ object IotaBuild extends Build {
     id = "fey-stream",
     base = file("./performers/stream"),
     settings = BasicSettings ++ StreambuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.StreamDependencies
-
-    ))
+      libraryDependencies ++= ModuleDependencies.StreamDependencies,
+      assemblyJarName in assembly := "fey_stream.jar"
+    )
+  )
 
    lazy val zmq = Project(
     id = "fey-zmq",
     base = file("./performers/zmq"),
     settings = BasicSettings ++ ZMQbuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.ZMQDependencies
+      libraryDependencies ++= ModuleDependencies.ZMQDependencies,
+        assemblyJarName in assembly := "fey_zmq.jar"
     ))
 
   lazy val virtual_sensor = Project(
     id = "fey-virtual-sensor",
     base = file("./performers/virtual_sensor"),
     settings = BasicSettings ++ VirtualSensorbuildSettings ++ Seq(
-      libraryDependencies ++= ModuleDependencies.VirtualSensorDependencies
+      libraryDependencies ++= ModuleDependencies.VirtualSensorDependencies,
+      assemblyJarName in assembly := "fey-virtual-sensor.jar"
     ))
-
 }
