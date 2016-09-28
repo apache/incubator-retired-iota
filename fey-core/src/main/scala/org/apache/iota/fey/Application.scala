@@ -46,10 +46,7 @@ object SYSTEM_ACTORS{
 
   FEY_CORE_ACTOR.actorRef ! FeyCore.START
 
-  val service = system.actorOf(Props[MyServiceActor], name = "FEY_REST_API")
-
-  implicit val timeout = Timeout(800.seconds)
-  IO(Http) ? Http.Bind(SYSTEM_ACTORS.service, interface = "0.0.0.0", port = 16666)
+  FeyUIService
 
 }
 
