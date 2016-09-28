@@ -65,7 +65,7 @@ object BuildSettings {
     //All tests need to be execute sequentially
     parallelExecution in Test := false,
     testOptions in Test += Tests.Cleanup( () => {
-      println("CLenning up")
+      print("\nCLeaning up")
       removeAll("/tmp/fey/test")
       def removeAll(path: String) = {
         def getRecursively(f: File): Seq[File] =
