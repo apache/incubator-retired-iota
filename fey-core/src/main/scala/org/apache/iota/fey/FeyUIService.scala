@@ -61,7 +61,7 @@ class FeyUIService(urlPath: String, port: Int) extends NettyServerComponents wit
       } catch {
         case e: Exception => ""
       }
-      Results.Ok(returnValue).as("application/json")
+      Results.Ok(returnValue).as("text/html")
     }
   }
 
