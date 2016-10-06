@@ -19,7 +19,7 @@ package org.apache.iota.fey
 
 import akka.actor.SupervisorStrategy.Restart
 import akka.actor.{Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props, Terminated}
-import akka.routing.{ActorRefRoutee, DefaultResizer, GetRoutees, SmallestMailboxPool}
+import akka.routing._
 import org.apache.iota.fey.JSON_PATH._
 import play.api.libs.json.JsObject
 
@@ -171,13 +171,21 @@ protected class Ensemble(val orchestrationID: String,
 
         var actor:ActorRef = null
         val actorProps = getPerformer(performerInfo, connections)
-        if(performerInfo.autoScale > 0) {
+        if(performerInfo.autoScale) {
 
-          val resizer = DefaultResizer(lowerBound = 1, upperBound = performerInfo.autoScale,
-            messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = 0.4)
-          val smallestMailBox = SmallestMailboxPool(1, Some(resizer))
+          val resizer = DefaultResizer(lowerBound = performerInfo.lowerBound, upperBound = performerInfo.upperBound,
+            messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = performerInfo.backoffThreshold, backoffRate = 0.1)
 
-          actor = context.actorOf(smallestMailBox.props(actorProps), name = performerID)
+          val strategy =
+            if(performerInfo.isRoundRobin) {
+               log.info(s"Using Round Robin for performer ${performerID}")
+               RoundRobinPool(1, Some(resizer))
+             } else {
+               log.info(s"Using Smallest mailbox for performer ${performerID}")
+               SmallestMailboxPool(1, Some(resizer))
+             }
+
+          actor = context.actorOf(strategy.props(actorProps), name = performerID)
 
         }else{
           actor = context.actorOf(actorProps, name = performerID)
@@ -204,11 +212,10 @@ protected class Ensemble(val orchestrationID: String,
 
     val clazz = loadClazzFromJar(performerInfo.classPath, s"${performerInfo.jarLocation}/${performerInfo.jarName}", performerInfo.jarName)
 
-    val autoScale = if(performerInfo.autoScale > 0) true else false
     val dispatcher = if(performerInfo.dispatcher != "") s"fey-custom-dispatchers.${performerInfo.dispatcher}" else ""
 
     val actorProps = Props(clazz,
-      performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, autoScale)
+      performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, performerInfo.autoScale)
 
     // dispatcher has higher priority than controlAware. That means that if both are defined
     // then the custom dispatcher will be used
@@ -282,7 +289,19 @@ object Ensemble {
       val id: String= (performer \ GUID).as[String]
       val schedule: Int = (performer \ SCHEDULE).as[Int]
       val backoff: Int = (performer \ BACKOFF).as[Int]
-      val autoScale: Int = if (performer.keys.contains(PERFORMER_AUTO_SCALE)) (performer \ PERFORMER_AUTO_SCALE).as[Int] else 0
+
+      val autoScale: Boolean = if (performer.keys.contains(PERFORMER_AUTO_SCALE)) true else false
+      val lowerBound: Int = if (autoScale) (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_LOWER_BOUND).as[Int] else 0
+      val upperBound: Int = if (autoScale) (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_UPPER_BOUND).as[Int] else 0
+      if(lowerBound > upperBound){
+        throw new IllegalArgumentException(" Could not define performer. Autoscale param: Lower bound greater than upper bound")
+      }
+      val threshold: Double = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_BACKOFF_THRESHOLD))
+        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_BACKOFF_THRESHOLD).as[Double] else 0.3
+      val roundRobin: Boolean = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_ROUND_ROBIN))
+        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_ROUND_ROBIN).as[Boolean] else false
+
+
       val jarName: String = (performer \ SOURCE \ SOURCE_NAME).as[String]
       val classPath: String = (performer \ SOURCE \ SOURCE_CLASSPATH).as[String]
       val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
@@ -290,7 +309,8 @@ object Ensemble {
       val location: String = if ( (performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION) ) CONFIG.DYNAMIC_JAR_REPO else CONFIG.JAR_REPOSITORY
       val dispatcher: String = if (performer.keys.contains(PERFORMER_DISPATCHER)) (performer \ PERFORMER_DISPATCHER).as[String] else ""
 
-      (id, new Performer(id, jarName, classPath, params, schedule.millisecond, backoff.millisecond, autoScale,controlAware, location, dispatcher))
+      (id, new Performer(id, jarName, classPath, params, schedule.millisecond, backoff.millisecond,
+        autoScale, lowerBound, upperBound,threshold, roundRobin,controlAware, location, dispatcher))
     }).toMap
   }
 
@@ -316,18 +336,24 @@ object Ensemble {
 /**
   * Holds the performer information
   *
-  * @param uid performer uid
-  * @param jarName performer jar name
-  * @param classPath performer class path
-  * @param parameters performer params
-  * @param schedule performer schedule interval
-  * @param backoff performer backoff interval
-  * @param autoScale if actor was started as a router and can autoscala
-  * @param controlAware if the actor uses a controlAware mailbox
-  * @param jarLocation download jar
-  * @param dispatcher Akka dispatcher that the actor is using
+  * @param uid
+  * @param jarName
+  * @param classPath
+  * @param parameters
+  * @param schedule
+  * @param backoff
+  * @param autoScale
+  * @param lowerBound
+  * @param upperBound
+  * @param backoffThreshold
+  * @param isRoundRobin
+  * @param controlAware
+  * @param jarLocation
+  * @param dispatcher
   */
 case class Performer(uid: String, jarName: String,
-                classPath: String, parameters: Map[String,String],
-                schedule: FiniteDuration, backoff: FiniteDuration,
-                autoScale: Int, controlAware: Boolean, jarLocation: String, dispatcher: String)
+                     classPath: String, parameters: Map[String,String],
+                     schedule: FiniteDuration, backoff: FiniteDuration,
+                     autoScale: Boolean, lowerBound: Int, upperBound: Int,
+                     backoffThreshold: Double, isRoundRobin: Boolean, controlAware: Boolean,
+                     jarLocation: String, dispatcher: String)

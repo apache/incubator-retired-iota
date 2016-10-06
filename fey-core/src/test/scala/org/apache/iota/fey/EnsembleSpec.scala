@@ -68,7 +68,11 @@ class EnsembleSpec extends BaseAkkaSpec{
       performer.controlAware should equal(false)
       performer.jarName should equal((performerSpec \ SOURCE \ SOURCE_NAME).as[String])
       performer.jarLocation should equal(CONFIG.JAR_REPOSITORY)
-      performer.autoScale should equal(0)
+      performer.autoScale should equal(false)
+      performer.lowerBound should equal(0)
+      performer.upperBound should equal(0)
+      performer.isRoundRobin should equal(false)
+      performer.backoffThreshold should equal(0.3)
       performer.backoff should equal((performerSpec \ BACKOFF).as[Int].millisecond)
       performer.classPath should equal((performerSpec \ SOURCE \ SOURCE_CLASSPATH).as[String])
       performer.uid should equal((performerSpec \ GUID).as[String])
@@ -268,6 +272,9 @@ class EnsembleSpec extends BaseAkkaSpec{
   var backScheduleRef: ActorRef = _
   val backprocessParamsTB = TestProbe("BACKOFF")
   val routee = """$a"""
+  val routee2 = """$b"""
+  val routee3 = """$c"""
+  val routee4 = """$d"""
 
   s"creating Ensemble with Backoff performer" should {
     s"result in creation of Ensemble actor " in {
@@ -286,8 +293,10 @@ class EnsembleSpec extends BaseAkkaSpec{
     s"create 'PERFORMER-PARAMS' with backoff time equal to 1 second" in{
       backEnsembleState.performers_metadata.get("PERFORMER-PARAMS").get.backoff should  equal(1000.millisecond)
     }
-    s"create 'PERFORMER-SCHEDUKE' with autoScale equal to true" in{
-      backEnsembleState.performers_metadata.get("PERFORMER-SCHEDULER").get.autoScale should  equal(2)
+    s"create 'PERFORMER-SCHEDULER' with autoScale equal to true" in {
+      backEnsembleState.performers_metadata.get("PERFORMER-SCHEDULER").get.autoScale should equal(true)
+      backEnsembleState.performers_metadata.get("PERFORMER-SCHEDULER").get.lowerBound should equal(4)
+      backEnsembleState.performers_metadata.get("PERFORMER-SCHEDULER").get.upperBound should equal(6)
     }
   }
   s"Performer with backoff enabled" should {
@@ -303,11 +312,14 @@ class EnsembleSpec extends BaseAkkaSpec{
     "result in router and routees created" in {
       globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(parent.ref.path.toString)
       Thread.sleep(500)
-      IdentifyFeyActors.actorsPath should have size(4)
+      IdentifyFeyActors.actorsPath should have size(7)
       IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005")
       IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-PARAMS")
       IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER")
       IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$routee")
+      IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$routee2")
+      IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$routee3")
+      IdentifyFeyActors.actorsPath should contain(s"${parent.ref.path}/MY-ENSEMBLE-0005/PERFORMER-SCHEDULER/$routee4")
     }
   }
 

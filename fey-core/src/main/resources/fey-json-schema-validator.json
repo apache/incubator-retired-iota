@@ -36,8 +36,26 @@
             "type": "string"
           },
           "autoScale":{
-            "type":"integer",
-            "minimum":0
+            "type": "object",
+            "lowerBound" : {
+              "type":"integer",
+              "minimum":1
+            },
+            "upperBound" : {
+              "type":"integer",
+              "minimum":1
+            },
+            "backoffThreshold" :{
+              "type":"number",
+              "minimum":0.0
+            },
+            "roundRobin":{
+              "type": "boolean"
+            },
+            "required":[
+              "lowerBound",
+              "upperBound"
+            ]
           },
           "schedule":{
             "type":"integer",

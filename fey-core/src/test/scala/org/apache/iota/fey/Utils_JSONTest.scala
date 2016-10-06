@@ -333,7 +333,10 @@ object Utils_JSONTest {
            "guid": "PERFORMER-SCHEDULER",
            "schedule": 200,
            "backoff": 0,
-           "autoScale": 2,
+           "autoScale": {
+            "lowerBound" : 4,
+            "upperBound" : 6
+           },
            "source": {
              "name": "fey-test-actor.jar",
              "classPath": "org.apache.iota.fey.TestActor",
