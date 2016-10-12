@@ -17,7 +17,6 @@
 
 package org.apache.iota.fey
 
-import com.typesafe.config.ConfigFactory
 import org.apache.iota.fey.FeyCore.JSON_TREE
 import play.api.BuiltInComponents
 import play.api.http.DefaultHttpErrorHandler
@@ -26,14 +25,14 @@ import play.api.mvc._
 import play.api.routing.Router
 import play.api.routing.sird._
 import play.core.server._
+import CONFIG._
 
 import scala.concurrent.Future
 
 object FeyUIService {
-  val config = ConfigFactory.load()
-  val port = config.getInt("port")
-  val urlPath = config.getString("urlPath")
-  val components = new FeyUIService(urlPath, port)
+
+
+  val components = new FeyUIService(URL_PATH, PORT)
   val server = components.server
 }
 
