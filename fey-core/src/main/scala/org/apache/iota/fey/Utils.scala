@@ -224,12 +224,13 @@ object CONFIG{
   var CUSTOM_DISPATCHERS: ConfigValue = null
   var MONITORING_ENABLED: Boolean = true
   var MONITORING_TYPE: String = "COMPLETE"
+  var PORT = 8080
+  var URL_PATH = "localhost"
 
   def loadUserConfiguration(path: String) : Unit = {
-
     val app = {
       if(path != "" && Files.exists(Paths.get(path))) {
-          ConfigFactory.parseFile(new File(path)).withFallback(ConfigFactory.load())
+        ConfigFactory.parseFile(new File(path)).withFallback(ConfigFactory.load())
       }else {
           log.info("Using Fey Default Configuration")
           log.warn(s"No user configuration defined. Check if your configuration path $path is right.")
@@ -250,6 +251,8 @@ object CONFIG{
     CUSTOM_DISPATCHERS = app.getValue("custom-dispatchers")
     MONITORING_ENABLED = app.getBoolean("monitoring.enable")
     MONITORING_TYPE = app.getString("monitoring.type").toUpperCase()
+    PORT = app.getInt("port")
+    URL_PATH = app.getString("urlPath")
 
     setLogbackConfiguration()
   }
