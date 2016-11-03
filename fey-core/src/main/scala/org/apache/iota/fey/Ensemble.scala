@@ -33,6 +33,7 @@ protected class Ensemble(val orchestrationID: String,
   import Ensemble._
 
   val monitoring_actor = FEY_MONITOR.actorRef
+  val DEFAULT_NULL = null
   var performers_metadata: Map[String, Performer] = Map.empty[String, Performer]
   var connectors: Map[String,Array[String]] = Map.empty[String,Array[String]]
   var performer: Map[String,ActorRef] = Map.empty[String,ActorRef]
@@ -163,13 +164,13 @@ protected class Ensemble(val orchestrationID: String,
     */
   private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors:HashMap[String, ActorRef]):(String, ActorRef) = {
     if(!tmpActors.contains(performerID)){
-      val performerInfo = performers_metadata.getOrElse(performerID, null)
-      if(performerInfo != null){
+      val performerInfo = performers_metadata.getOrElse(performerID, DEFAULT_NULL)
+      if (Option(performerInfo).isDefined) {
         val connections: Map[String, ActorRef] = connectionIDs.map(connID => {
           createFeyActor(connID, connectors.getOrElse(connID,Array.empty),tmpActors)
         }).toMap
 
-        var actor:ActorRef = null
+        var actor: ActorRef = DEFAULT_NULL
         val actorProps = getPerformer(performerInfo, connections)
         if(performerInfo.autoScale) {
 
@@ -204,6 +205,7 @@ protected class Ensemble(val orchestrationID: String,
 
   /**
     * Creates actor props based on JSON configuration
+    *
     * @param performerInfo Performer object
     * @param connections connections
     * @return Props of actor based on JSON config
@@ -271,11 +273,11 @@ object Ensemble {
     * @return map of connectors
     */
   def extractConnections(connectors: List[JsObject]): Map[String,Array[String]] = {
-    connectors.map(connector => {
+    connectors.flatMap(connector => {
       connector.keys.map(key => {
         (key, (connector \ key).as[List[String]].toArray)
       }).toMap
-    }).flatten.toMap
+    }).toMap
   }
 
   /**
@@ -296,12 +298,18 @@ object Ensemble {
       if(lowerBound > upperBound){
         throw new IllegalArgumentException(" Could not define performer. Autoscale param: Lower bound greater than upper bound")
       }
-      val threshold: Double = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_BACKOFF_THRESHOLD))
-        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_BACKOFF_THRESHOLD).as[Double] else 0.3
-      val roundRobin: Boolean = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_ROUND_ROBIN))
-        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_ROUND_ROBIN).as[Boolean] else false
-
-
+      val threshold: Double = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_BACKOFF_THRESHOLD)) {
+        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_BACKOFF_THRESHOLD).as[Double]
+      }
+      else {
+        0.3
+      }
+      val roundRobin: Boolean = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_ROUND_ROBIN)) {
+        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_ROUND_ROBIN).as[Boolean]
+      }
+      else {
+        false
+      }
       val jarName: String = (performer \ SOURCE \ SOURCE_NAME).as[String]
       val classPath: String = (performer \ SOURCE \ SOURCE_CLASSPATH).as[String]
       val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
