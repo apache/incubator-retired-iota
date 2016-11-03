@@ -17,7 +17,7 @@
 
 package org.apache.iota.fey
 
-import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
@@ -29,25 +29,27 @@ case class TrieNode(path: String, children: ArrayBuffer[TrieNode], events:ArrayB
 
 protected class Trie(systemName: String){
 
+  val DEFAULT_NULL = null
+
   private val root: TrieNode = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty)
   var elements: Int = 0
 
-  def append(path: String, event: Monitor.MonitorEvent = null): Unit = {
+  def append(path: String, event: Monitor.MonitorEvent = DEFAULT_NULL): Unit = {
     append(path.replaceFirst("akka://","").split("/"),root,1,event)
   }
 
   @tailrec private def append(path: Array[String], root: TrieNode, index: Int, event: Monitor.MonitorEvent): Unit = {
-    if(root != null && index < path.length){
+    if (Option(root).isDefined && index < path.length) {
       var nextRoot = root.children.filter(child => child.path == path(index))
       if(nextRoot.isEmpty){
         nextRoot = ArrayBuffer(TrieNode(path(index), ArrayBuffer.empty, ArrayBuffer.empty))
         root.children += nextRoot(0)
         elements += 1
       }
-      if(event != null && index == path.length - 1){
+      if (Option(event).isDefined && index == path.length - 1) {
         nextRoot(0).events += event
       }
-      append(path, nextRoot(0),index+1, event)
+      append(path, nextRoot(0), index + 1, event)
     }
   }
 
@@ -56,7 +58,7 @@ protected class Trie(systemName: String){
   }
 
   @tailrec private def recHasPath(root: TrieNode, path: Array[String], index: Int): Boolean = {
-    if(root != null && index < path.length) {
+    if (Option(root).isDefined && index < path.length) {
       var nextRoot = root.children.filter(child => child.path == path(index))
       if(nextRoot.isEmpty){
         false
@@ -73,7 +75,7 @@ protected class Trie(systemName: String){
   }
 
   @tailrec private def recGetNode(root: TrieNode, path: Array[String], index: Int): Option[TrieNode]= {
-    if(root != null && index < path.length) {
+    if (Option(root).isDefined && index < path.length) {
       var nextRoot = root.children.filter(child => child.path == path(index))
       if(nextRoot.isEmpty){
         None
@@ -99,11 +101,11 @@ protected class Trie(systemName: String){
   }
 
   def print:JsValue = {
-    getObject(root, null)
+    getObject(root, DEFAULT_NULL)
   }
 
   def printWithEvents:JsValue = {
-    getObjectEvent(root, null)
+    getObjectEvent(root, DEFAULT_NULL)
   }
 
   def getRootChildren():ArrayBuffer[TrieNode] = {
@@ -111,9 +113,9 @@ protected class Trie(systemName: String){
   }
 
   private def getObject(root: TrieNode, parent: TrieNode):JsObject = {
-    if(root != null) {
+    if (Option(root).isDefined) {
      Json.obj("name" -> root.path,
-       "parent" -> (if(parent != null) parent.path else "null"),
+       "parent" -> (if (Option(parent).isDefined) parent.path else "null"),
         "children" -> root.children.map(getObject(_, root))
      )
     }else{
@@ -122,9 +124,9 @@ protected class Trie(systemName: String){
   }
 
   private def getObjectEvent(root: TrieNode, parent: TrieNode):JsObject = {
-    if(root != null) {
+    if (Option(root).isDefined) {
       Json.obj("name" -> root.path,
-        "parent" -> (if(parent != null) parent.path else "null"),
+        "parent" -> (if (Option(parent).isDefined) parent.path else "null"),
         "events" -> root.events.map(event => {
           Json.obj("type" -> event.event,
           "timestamp" -> event.timestamp,
