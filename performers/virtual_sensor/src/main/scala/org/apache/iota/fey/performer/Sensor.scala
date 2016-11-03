@@ -1,29 +1,31 @@
-
-// Licensed to the Apache Software Foundation (ASF) under one or more
-// contributor license agreements.  See the NOTICE file distributed with
-// this work for additional information regarding copyright ownership.
-// The ASF licenses this file to You under the Apache License, Version 2.0
-// (the "License"); you may not use this file except in compliance with
-// the License.  You may obtain a copy of the License at
-//
-//    http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// ee the License for the specific language governing permissions and
-// limitations under the License.
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package org.apache.iota.fey.performer
 
 import akka.actor.ActorRef
+import org.apache.commons.math3.distribution.NormalDistribution
 import org.apache.iota.fey.FeyGenericActor
+import org.joda.time.DateTime
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 import scala.collection.immutable.Map
 import scala.concurrent.duration._
-import org.apache.commons.math3.distribution.NormalDistribution
-import org.joda.time.DateTime
-import play.api.libs.json.{JsObject, JsValue, Json}
+import scala.util.Try
 
 
 class Sensor(override val params: Map[String, String] = Map.empty,
@@ -38,8 +40,8 @@ class Sensor(override val params: Map[String, String] = Map.empty,
   var name = "sensor"
   var expected_value: Double = 70.0
   var sigma: Double = 1.0
-  var exceptions: JsValue = null
-  var output: NormalDistribution = null
+  var exceptions: Option[JsValue] = None
+  var output: Option[NormalDistribution] = None
   var sensor_type = "environmental"
   // wav    vibration
   var vib = ""
@@ -87,13 +89,13 @@ class Sensor(override val params: Map[String, String] = Map.empty,
     val ts = java.lang.System.currentTimeMillis().toString
     var out = ""
     if (!isException) {
-      output = new NormalDistribution(expected_value, sigma)
+      output = Try(new NormalDistribution(expected_value, sigma)).toOption
       sound = normal_sound
       vib = normal_vib
     }
 
     sensor_type match {
-      case "environmental" => out = s"""$lrn|$ts|{"x":${output.sample()}}"""
+      case "environmental" => out = s"""$lrn|$ts|{"x":${output.fold(0.0D)(x => x.sample())}}"""
       case "vibration"     => out = s"""$lrn|$ts|{"blob":$vib}"""
       case "wav"           => out = s"""$lrn|$ts|{"wav":$sound}"""
     }
@@ -105,7 +107,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
     var efile = ""
     var ev = 0.0
     val date = DateTime.now
-    val all_exceptions = exceptions.as[List[JsObject]]
+    val all_exceptions = exceptions.fold(List[JsObject]())(value => value.as[List[JsObject]])
     all_exceptions.foreach(x => {
       try {
         val st = (x \ "start_time").as[Array[Int]]
@@ -120,7 +122,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
             sound = exception_sound
           } else {
             ev = (x \ "expected_value").as[Double]
-            output = new NormalDistribution(ev, sigma)
+            output = Option(new NormalDistribution(ev, sigma))
           }
           true
         }
@@ -152,7 +154,7 @@ class Sensor(override val params: Map[String, String] = Map.empty,
     if (params.contains("exceptions")) {
       val p = params("exceptions")
       try {
-        exceptions = Json.parse(p)
+        exceptions = Option(Json.parse(p))
       } catch {
         case e: Exception => log.error(s"Invalid JSON defining exception $p")
       }
