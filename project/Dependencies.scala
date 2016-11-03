@@ -29,15 +29,16 @@ object Dependencies {
   val codec           = "commons-codec"       % "commons-codec"               % "1.10"
   val apacheIO        = "commons-io"          % "commons-io"                  % "2.4"
 
-  val akka_actor      = "com.typesafe.akka"   %% "akka-actor"                 % "2.4.2"
+  val akka_actor      = "com.typesafe.akka"   %% "akka-actor"                 % "2.4.10"
+
   val typesafe_config = "com.typesafe"        %  "config"                     % "1.3.0"
 
   val playJson        = "com.typesafe.play"   %% "play-json"                  % "2.5.3"
-  val playNetty = "com.typesafe.play" %% "play-netty-server" % "2.5.3"
+  val playNetty       = "com.typesafe.play"   %% "play-netty-server"          % "2.5.8"
   val jsonValidator   = "com.eclipsesource"   %% "play-json-schema-validator" % "0.7.0"
 
   //Logger
-  val slf4j           = "com.typesafe.akka"   %% "akka-slf4j"                 % "2.4.2"
+  val slf4j           = "com.typesafe.akka"   %% "akka-slf4j"                 % "2.4.10"
   val log4jbind       = "ch.qos.logback"      %  "logback-classic"            % "1.1.7"
   val javaFilter      = "janino" % "janino"   %  "2.5.10"
 
@@ -46,7 +47,7 @@ object Dependencies {
   val sprayRouting    = "io.spray"            %%  "spray-routing"             % "1.3.3"
 
   //Tests
-  val akka_testkit    = "com.typesafe.akka"   %% "akka-testkit"               % "2.4.2"
-  val scala_test      = "org.scalatest"       %% "scalatest"                   % "3.0.0-RC4"
+  val akka_testkit    = "com.typesafe.akka"   %% "akka-testkit"               % "2.4.8"
+  val scala_test      = "org.scalatest"       %% "scalatest"                  % "3.0.0-RC4"
 
 }

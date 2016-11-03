@@ -54,9 +54,13 @@ object BuildSettings {
         Some("releases"  at nexus + "releases")
     },
     publishMavenStyle := true,
-    conflictManager := ConflictManager.all,
+    conflictManager := ConflictManager.latestRevision,
     assemblyMergeStrategy in assembly := {
-      case PathList("org", "slf4j", xs @ _*)         => MergeStrategy.last
+      case "reference.conf"  => MergeStrategy.concat
+      case "application.conf"  => MergeStrategy.concat
+      case PathList("org", "slf4j", xs @ _*)  => MergeStrategy.last
+      case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.last
+      case PathList("scala", "xml", xs @ _*)         => MergeStrategy.last
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)
