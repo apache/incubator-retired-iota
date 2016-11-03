@@ -33,14 +33,16 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
 
   //-------default params----------
   val DEFAULT_PORT = 5559
+  val DEFAULT_NULL = null
+
   var port: Int = DEFAULT_PORT
   var target: String = "localhost"
   val DEFAULT_LINGER = 200
   val DEFAULT_HMW = 10
 
   //-------class vars-------------------
-  var ctx: ZMQ.Context = null
-  var pub: ZMQ.Socket = null
+  var ctx: ZMQ.Context = DEFAULT_NULL
+  var pub: ZMQ.Socket = DEFAULT_NULL
   var count: Int = 0
 
   override def onStart: Unit = {
@@ -113,7 +115,7 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
     // The tuple has the following elements: lrn, timestamp, value, type
     // And we have to create a message with the format:
     // DATA|cloud|lrn|timestamp|{"<type>" : <value>}
-    s"""DATA|cloud| ${fields._1}|${fields._2}|{"${fields._3}":"${fields._4}"}"""
+    s"""DATA|cloud| ${fields._1}|${fields._2}|{${fields._3}:${fields._4}}"""
   }
 
   def sendZMQ(Message: String): Unit = {
