@@ -87,8 +87,8 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
     case _ =>
   }
 
-  def logInfo(path:String, event:String, timestamp: Long, info:String, reason:Throwable = null) = {
-    if(reason != null){
+  def logInfo(path:String, event:String, timestamp: Long, info:String, reason:Throwable = null): Unit = {
+    if(Option(reason).isDefined){
       log.error(reason, s"$event | $timestamp | $path | $info")
     }else{
       log.info(s"$event | $timestamp | $path | $info")
@@ -123,13 +123,13 @@ protected object Monitor{
   }
 
   def mapEventsToRows(actors: ArrayBuffer[TrieNode], prefix:String): ArrayBuffer[String] = {
-    actors.map(actor => {
+    actors.flatMap(actor => {
       val currentPath = if (prefix == "/user/FEY-CORE") actor.path else s"$prefix/${actor.path}"
       val events = actor.events.map(event => {
         getTableLine(currentPath, event.timestamp, event.event, event.info)
       })
       mapEventsToRows(actor.children, currentPath) ++ events
-    }).flatten
+    })
   }
 
   def getSimpleHTMLEvents: String = {
