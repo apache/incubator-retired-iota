@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -45,12 +44,14 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   extends Actor with ActorLogging{
 
+  val DEFAULT_NULL = null
+
   import FeyGenericActor._
 
   /**
     * Keeps reference to the cancellable
     */
-  @volatile private var scheduler: Cancellable = null
+  @volatile private var scheduler: Cancellable = DEFAULT_NULL
   @volatile private var endBackoff: Long = 0
   private[fey] val monitoring_actor = FEY_MONITOR.actorRef
 
@@ -111,9 +112,9 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * Stops the scheduler
     */
   private final def stopScheduler() = {
-    if (scheduler != null) {
+    if (Option(scheduler).isDefined) {
       scheduler.cancel()
-      scheduler = null
+      scheduler = DEFAULT_NULL
     }
   }
   /**
@@ -129,7 +130,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * The time interval to be used is the one passed to the constructor
     */
   private final def startScheduler() = {
-    if(scheduler == null && schedulerTimeInterval.toNanos != 0){
+    if(Option(scheduler).isEmpty && schedulerTimeInterval.toNanos != 0){
       scheduler = context.system.scheduler.schedule(1.seconds, schedulerTimeInterval){
         try{
           execute()
@@ -142,10 +143,11 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   /**
     * Check state of scheduler
+    *
     * @return true if scheduller is running
     */
   final def isShedulerRunning():Boolean = {
-    if(scheduler != null && !scheduler.isCancelled){
+    if(Option(scheduler).isDefined && !scheduler.isCancelled){
       true
     }else{
       false
@@ -154,6 +156,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   /**
     * get endBackoff
+    *
     * @return
     */
   final def getEndBackoff(): Long = {
@@ -170,6 +173,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * Called every time actors receives the PROCESS message.
     * The default implementation propagates the message to the connected actors
     * and fires up the backoff
+    *
     * @param message message to be processed
     * @tparam T Any
     */
@@ -220,12 +224,14 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   /**
     * Used to set a info message when sending Stop monitor events
+    *
     * @return String info
     */
   def stopMonitorInfo:String = "Stopped"
 
   /**
     * Used to set a info message when sending Start monitor events
+    *
     * @return String info
     */
   def startMonitorInfo:String = "Started"
@@ -260,6 +266,7 @@ object FeyGenericActor {
   case object PRINT_PATH
 
 }
+
 
 
 
