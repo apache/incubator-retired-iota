@@ -33,16 +33,14 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
 
   //-------default params----------
   val DEFAULT_PORT = 5559
-  val DEFAULT_NULL = null
-
   var port: Int = DEFAULT_PORT
   var target: String = "localhost"
   val DEFAULT_LINGER = 200
   val DEFAULT_HMW = 10
 
   //-------class vars-------------------
-  var ctx: ZMQ.Context = DEFAULT_NULL
-  var pub: ZMQ.Socket = DEFAULT_NULL
+  var ctx: ZMQ.Context = null
+  var pub: ZMQ.Socket = null
   var count: Int = 0
 
   override def onStart: Unit = {

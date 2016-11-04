@@ -29,12 +29,10 @@ case class TrieNode(path: String, children: ArrayBuffer[TrieNode], events:ArrayB
 
 protected class Trie(systemName: String){
 
-  val DEFAULT_NULL = null
-
   private val root: TrieNode = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty)
   var elements: Int = 0
 
-  def append(path: String, event: Monitor.MonitorEvent = DEFAULT_NULL): Unit = {
+  def append(path: String, event: Monitor.MonitorEvent = null): Unit = {
     append(path.replaceFirst("akka://","").split("/"),root,1,event)
   }
 
@@ -101,11 +99,11 @@ protected class Trie(systemName: String){
   }
 
   def print:JsValue = {
-    getObject(root, DEFAULT_NULL)
+    getObject(root, null)
   }
 
   def printWithEvents:JsValue = {
-    getObjectEvent(root, DEFAULT_NULL)
+    getObjectEvent(root, null)
   }
 
   def getRootChildren():ArrayBuffer[TrieNode] = {

@@ -32,14 +32,13 @@ class ZMQSubscriber(override val params: Map[String, String] = Map.empty,
 
   //-------default params----------
   val DEFAULT_PORT = 5563
-  val DEFAULT_NULL = null
   var port: Int = DEFAULT_PORT
   var target: String = "localhost"
   val topic_filter: String = "DATA"
 
   //-------class vars-------------------
-  var ctx: ZMQ.Context = DEFAULT_NULL
-  var pub: ZMQ.Socket = DEFAULT_NULL
+  var ctx: ZMQ.Context = null
+  var pub: ZMQ.Socket = null
   var count: Int = 0
 
   override def onStart: Unit = {
@@ -70,8 +69,8 @@ class ZMQSubscriber(override val params: Map[String, String] = Map.empty,
     pub.disconnect("tcp://" + target + ":" + port)
     pub.close()
     ctx.close()
-    pub = DEFAULT_NULL
-    ctx = DEFAULT_NULL
+    pub = null
+    ctx = null
   }
 
   override def onRestart(reason: Throwable): Unit = {

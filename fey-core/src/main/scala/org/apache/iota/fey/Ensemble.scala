@@ -33,7 +33,6 @@ protected class Ensemble(val orchestrationID: String,
   import Ensemble._
 
   val monitoring_actor = FEY_MONITOR.actorRef
-  val DEFAULT_NULL = null
   var performers_metadata: Map[String, Performer] = Map.empty[String, Performer]
   var connectors: Map[String,Array[String]] = Map.empty[String,Array[String]]
   var performer: Map[String,ActorRef] = Map.empty[String,ActorRef]
@@ -164,13 +163,13 @@ protected class Ensemble(val orchestrationID: String,
     */
   private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors:HashMap[String, ActorRef]):(String, ActorRef) = {
     if(!tmpActors.contains(performerID)){
-      val performerInfo = performers_metadata.getOrElse(performerID, DEFAULT_NULL)
+      val performerInfo = performers_metadata.getOrElse(performerID, null)
       if (Option(performerInfo).isDefined) {
         val connections: Map[String, ActorRef] = connectionIDs.map(connID => {
           createFeyActor(connID, connectors.getOrElse(connID,Array.empty),tmpActors)
         }).toMap
 
-        var actor: ActorRef = DEFAULT_NULL
+        var actor: ActorRef = null
         val actorProps = getPerformer(performerInfo, connections)
         if(performerInfo.autoScale) {
 

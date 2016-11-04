@@ -44,14 +44,13 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   extends Actor with ActorLogging{
 
-  val DEFAULT_NULL = null
 
   import FeyGenericActor._
 
   /**
     * Keeps reference to the cancellable
     */
-  @volatile private var scheduler: Cancellable = DEFAULT_NULL
+  @volatile private var scheduler: Cancellable = null
   @volatile private var endBackoff: Long = 0
   private[fey] val monitoring_actor = FEY_MONITOR.actorRef
 
@@ -114,7 +113,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
   private final def stopScheduler() = {
     if (Option(scheduler).isDefined) {
       scheduler.cancel()
-      scheduler = DEFAULT_NULL
+      scheduler = null
     }
   }
   /**
