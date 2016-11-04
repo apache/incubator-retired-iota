@@ -30,6 +30,7 @@ import JSON_PATH._
 import akka.routing.GetRoutees
 import org.apache.iota.fey.Orchestration.{CREATE_ENSEMBLES, DELETE_ENSEMBLES, UPDATE_ENSEMBLES}
 import com.eclipsesource.schema._
+import org.apache.iota.fey.GlobalWatchService.REGISTER_WATCHER_PERFORMER
 
 import scala.collection.mutable.HashMap
 
@@ -41,6 +42,7 @@ protected class FeyCore extends Actor with ActorLogging{
   val monitoring_actor = FEY_MONITOR.actorRef
 
   val identifier: ActorRef = context.actorOf(Props(classOf[IdentifyFeyActors]), name = IDENTIFIER_NAME)
+  val globalWatcher: ActorRef = context.actorOf(Props(classOf[GlobalWatchService]), name = "GLOBAL_WATCH_SERVICE")
   context.watch(identifier)
 
   override def receive: Receive = {
@@ -60,6 +62,8 @@ protected class FeyCore extends Actor with ActorLogging{
           orchestrationReceivedNoFile(orchestrationJson)
       }
 
+    case REGISTER_WATCHER_PERFORMER(path, file_name, actor, events,ifExists) =>
+      globalWatcher ! REGISTER_WATCHER_PERFORMER(path, file_name, actor, events, ifExists)
 
     case STOP_EMPTY_ORCHESTRATION(orchID) =>
       log.warning(s"Deleting Empty Orchestration $orchID")

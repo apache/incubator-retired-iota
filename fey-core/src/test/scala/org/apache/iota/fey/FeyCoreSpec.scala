@@ -112,7 +112,7 @@ class FeyCoreSpec extends BaseAkkaSpec  {
 
   "Sending FeyCore.JSON_TREE to FeyCore" should {
     s"result in logging a 6 path messages at Info " in {
-      EventFilter.info(pattern = s"^akka://.*/user/.*", occurrences = 6) intercept {
+      EventFilter.info(pattern = s"^akka://.*/user/.*", occurrences = 7) intercept {
         feyCoreRef ! FeyCore.JSON_TREE
       }
     }

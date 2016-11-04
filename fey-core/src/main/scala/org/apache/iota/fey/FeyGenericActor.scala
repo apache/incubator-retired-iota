@@ -18,6 +18,8 @@
 
 package org.apache.iota.fey
 
+import java.nio.file.{Path, WatchEvent}
+
 import akka.actor.{Actor, ActorLogging, ActorRef, Cancellable}
 import akka.routing.GetRoutees
 
@@ -46,7 +48,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
   extends Actor with ActorLogging{
 
   import FeyGenericActor._
-
+  import GlobalWatchService._
   /**
     * Keeps reference to the cancellable
     */
@@ -56,23 +58,27 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   override final def receive: Receive = {
 
-    case PRINT_PATH =>
-      log.info(s"** ${self.path} **")
+    case PRINT_PATH => log.info(s"** ${self.path} **")
 
-    case STOP =>
-      context.stop(self)
+    case STOP => context.stop(self)
 
-    case PROCESS(message) =>
-      if(System.nanoTime() >= endBackoff) {
-        processMessage(message, sender())
-      }
-    // In case
+    case ENTRY_CREATED(path) => onReceiveWatcherCreate(path)
+
+    case ENTRY_MODIFIED(path) => onReceiveWatcherModify(path)
+
+    case ENTRY_DELETED(path) => onReceiveWatcherDelete(path)
+
+    case PROCESS(message) => checkBackoff(message, sender())
+
     case EXCEPTION(reason) => throw reason
-
     case GetRoutees => //Discard
+    case x => customReceive(x) //Not treated messages will be pass over to the receiveComplement
+  }
 
-    //Not treated messages will be pass over to the receiveComplement
-    case x => customReceive(x)
+  private def checkBackoff[T](message: T, sender: ActorRef) = {
+    if(System.nanoTime() >= endBackoff) {
+      processMessage(message, sender)
+    }
   }
 
   override final def preRestart(reason: Throwable, message: Option[Any]): Unit = {
@@ -105,6 +111,11 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
 
   def onRestart(reason: Throwable): Unit = {
     log.info("RESTARTED method")
+  }
+
+  final def registerPathToGlobalWatcher(dir_path: String, file_name:Option[String],
+                                        events: Array[WatchEvent.Kind[_]], loadIfExists: Boolean = false): Unit = {
+    FEY_CORE_ACTOR.actorRef !  REGISTER_WATCHER_PERFORMER(dir_path, file_name, self, events, loadIfExists)
   }
 
   /**
@@ -230,6 +241,32 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     */
   def startMonitorInfo:String = "Started"
 
+  /**
+    * Called every time the performer is notified of a file watcher event
+    * of type MODIFY
+    * @param path path of the file
+    */
+  def onReceiveWatcherModify(path: Path):Unit = {
+    log.info(s"File Modified: $path")
+  }
+
+  /**
+    * Called every time the performer is notified of a file watcher event
+    * of type DELETE
+    * @param path path of the file
+    */
+  def onReceiveWatcherDelete(path: Path):Unit = {
+    log.info(s"File Deleted: $path")
+  }
+
+  /**
+    * Called every time the performer is notified of a file watcher event
+    * of type CREATE
+    * @param path path of the file
+    */
+  def onReceiveWatcherCreate(path: Path):Unit = {
+    log.info(s"File Created: $path")
+  }
 }
 
 object FeyGenericActor {
