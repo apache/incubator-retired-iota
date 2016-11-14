@@ -1,6 +1,6 @@
 # iota
 
-The iota open-source iot platform consists of a number of open source components including larger componets such a Kafka, Mesos and others. The core
+The iota open-source iot platform consists of a number of open source components including larger components such a Kafka, Mesos and others. The core
 iota components found in the folders in this code repository and they include:
 
 1. The **Fey Engine** in the folder fey-core - This is written in Scala and uses the Akka framework
