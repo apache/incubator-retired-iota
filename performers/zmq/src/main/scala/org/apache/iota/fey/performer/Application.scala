@@ -22,7 +22,7 @@ import scala.concurrent.duration._
 
 object Application extends App {
 
-  //println("Starting")
+  //print("Starting")
 
   //implicit val system = ActorSystem("ZMQ-RUN")
 

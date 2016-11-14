@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -173,7 +172,7 @@ abstract class FeyGenericActorReceiver(override val params: Map[String,String] =
 
     }catch{
       case e: Exception =>
-        if(outputStream != null) {
+        if(Option(outputStream).isDefined) {
           outputStream.close()
           (new File(s"${CONFIG.DYNAMIC_JAR_REPO}/$jarName")).delete()
         }

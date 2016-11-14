@@ -1,4 +1,3 @@
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,25 +17,23 @@
 
 package org.apache.iota.fey
 
-import java.nio.file.Paths
 import java.io.File
 
-import scala.concurrent.duration._
-import akka.actor.{Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props, Terminated}
-import Utils._
 import akka.actor.SupervisorStrategy._
-import play.api.libs.json._
-import JSON_PATH._
+import akka.actor.{Actor, ActorLogging, ActorRef, OneForOneStrategy, PoisonPill, Props, Terminated}
 import akka.routing.GetRoutees
-import org.apache.iota.fey.Orchestration.{CREATE_ENSEMBLES, DELETE_ENSEMBLES, UPDATE_ENSEMBLES}
 import com.eclipsesource.schema._
+import org.apache.iota.fey.JSON_PATH._
+import org.apache.iota.fey.Orchestration.{CREATE_ENSEMBLES, DELETE_ENSEMBLES, UPDATE_ENSEMBLES}
+import org.apache.iota.fey.Utils._
+import play.api.libs.json._
 
 import scala.collection.mutable.HashMap
+import scala.concurrent.duration._
 
 protected class FeyCore extends Actor with ActorLogging{
 
   import FeyCore._
-  import CONFIG._
 
   val monitoring_actor = FEY_MONITOR.actorRef
 
