@@ -29,7 +29,7 @@ case class TrieNode(path: String, children: ArrayBuffer[TrieNode], events:ArrayB
 
 protected class Trie(systemName: String){
 
-  private val DEFAULT_TRIE_NODE = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty
+  private val DEFAULT_TRIE_NODE = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty)
 
   private val root: Option[TrieNode] = Option(DEFAULT_TRIE_NODE)
   var elements: Int = 0
