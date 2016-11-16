@@ -195,7 +195,7 @@ For Fey, each Performer represents a Generic Actor which should have the followi
 
 #### Source Property
 
-The source property of an Performer holds the necessary information for loading the actor from a _.jar_. Each Performer has only one source property and it should contains the following information:
+The source property of an Performer holds the necessary information for loading the actor from a _.jar_. Each Performer has only one source property and it should contain the following information:
 
 | Property                    | Type                 | Description   |
 | :---------------------- | :------------------- | :------------ |
