@@ -101,7 +101,7 @@ The Fey configuration file can optionally include one of more of the following p
 ### Fey Logging
 
 Fey uses _logback.xml_ to configure its logs. By Default, Fey appends the logs to STDOUT. You can change the configuration to log a file or you could log to both. 
-If you ssave the log to a file the default location would be at `${HOME}/.fey/logs/`.
+If you save the log to a file the default location would be at `${HOME}/.fey/logs/`.
 Fey uses a Rolling File Appender where each log file has a max size of one megabyte (1MB) and it keeps 30 log files at maximum.
 
 In Fey the default log level is `DEBUG` for the entire system, and the other configuration offered by Fey are log level .
@@ -110,10 +110,10 @@ In Fey the default log level is `DEBUG` for the entire system, and the other con
 
 Fey offers the possibility of downloading the jar to be used by the Performer before it starts it, which means that the jar could not be in the jar repo and will be download when requested to.
 
-The jars downloaded on demand will be store in the directory specified in Fey configuration `dynamic-jar-population.downloaded-repository`. The default value is `${HOME}"/.fey/jars"`.
+The jars downloaded on demand will be stored in the directory specified in Fey configuration `dynamic-jar-population.downloaded-repository`. The default value is `${HOME}"/.fey/jars"`.
 
 Fey will download the jar only when it is not available in the downloaded-repository.
-By default Fey will not clean up the downloaded-repository every time it is launched. If you want to force this condition will can change the Fey configuration `dynamic-jar-population.force-pull` to `true`.
+By default Fey will not clean up the downloaded-repository every time it is launched. If you want to force this condition you can change the Fey configuration `dynamic-jar-population.force-pull` to `true`.
 
 ```json
 dynamic-jar-population{
@@ -133,9 +133,9 @@ In order to tell Fey to download a jar, you have to specify its location in the 
   }
 ```
 
-`location` is an optional property. It it is present, the `url` property must be defined as well. The `credentials` property is also optional.
+`location` is an optional property. If it is present, the `url` property must be defined as well. The `credentials` property is also optional.
 
-You can use environment variables to define your credentials. Fey you first try to resolve the `user` and the `password` value by looking to the environment variables, in case it does not exists, the value itself will be used.
+You can use environment variables to define your credentials. Fey will first try to resolve the `user` and the `password` value by looking to the environment variables, in case it does not exists, the value itself will be used.
 
 For example, if your `user` property is `MYNAME`, Fey will look for an environment variable called `MYNAME`, if it is able to find, the value in the environment variable will be used, if it is not able to find the value `MYNAME` will be used.
 
