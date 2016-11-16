@@ -306,9 +306,9 @@ The Generic Actor offers the following constructor parameters:
 
 When starting a new **Performer**, Fey will give to the actor all the configuration specified in the Orchestration's JSON.
 
-`The GenericActor must override all the constructor parameters in order and can not define any extras one.`
+`The GenericActor must override all the constructor parameters in order and can not define any extra ones.`
 
-The reason for these restrictions is that Fey will load your actor from the _.jar_ and you generate the actor reference passing in the list of constructor parameters in order. In case these restrictions are not obeyed, Fey will throw an _IllegalArgumentException_ exception during the creation of the actor because it could not find a matching constructor on the class.
+The reason for these restrictions is that Fey will load your actor from the _.jar_ and you generate the actor reference by  passing in the list of constructor parameters in order. In case these restrictions are not obeyed, Fey will throw an _IllegalArgumentException_ exception during the creation of the actor because it could not find a matching constructor on the class.
 
 ```scala
 class MyGenericActor(override val params: Map[String, String] = Map.empty,
