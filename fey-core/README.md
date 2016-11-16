@@ -100,7 +100,7 @@ The Fey configuration file can optionally include one of more of the following p
 
 ### Fey Logging
 
-Fey uses _logback.xml_ to configure its logs. By Default, Fey appends the to STOUT. You can change the configuration to log a file or you could log to both. 
+Fey uses _logback.xml_ to configure its logs. By Default, Fey appends the logs to STDOUT. You can change the configuration to log a file or you could log to both. 
 If you ssave the log to a file the default location would be at `${HOME}/.fey/logs/`.
 Fey uses a Rolling File Appender where each log file has a max size of one megabyte (1MB) and it keeps 30 log files at maximum.
 
