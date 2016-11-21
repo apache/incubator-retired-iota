@@ -163,21 +163,21 @@ protected class Ensemble(val orchestrationID: String,
     */
   private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors:HashMap[String, ActorRef]):(String, ActorRef) = {
     if(!tmpActors.contains(performerID)){
-      val performerInfo = performers_metadata.getOrElse(performerID, null)
-      if (Option(performerInfo).isDefined) {
+      val performerInfo = performers_metadata.get(performerID)
+      if (performerInfo.isDefined) {
         val connections: Map[String, ActorRef] = connectionIDs.map(connID => {
           createFeyActor(connID, connectors.getOrElse(connID,Array.empty),tmpActors)
         }).toMap
 
         var actor: ActorRef = null
-        val actorProps = getPerformer(performerInfo, connections)
-        if(performerInfo.autoScale) {
+        val actorProps = getPerformer(performerInfo.get, connections)
+        if(performerInfo.get.autoScale) {
 
-          val resizer = DefaultResizer(lowerBound = performerInfo.lowerBound, upperBound = performerInfo.upperBound,
-            messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = performerInfo.backoffThreshold, backoffRate = 0.1)
+          val resizer = DefaultResizer(lowerBound = performerInfo.get.lowerBound, upperBound = performerInfo.get.upperBound,
+            messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = performerInfo.get.backoffThreshold, backoffRate = 0.1)
 
           val strategy =
-            if(performerInfo.isRoundRobin) {
+            if(performerInfo.get.isRoundRobin) {
                log.info(s"Using Round Robin for performer ${performerID}")
                RoundRobinPool(1, Some(resizer))
              } else {

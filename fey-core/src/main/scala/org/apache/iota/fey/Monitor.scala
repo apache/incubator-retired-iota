@@ -57,7 +57,7 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
       eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.STOP, timestamp, info))
 
     case RESTART(reason, timestamp) =>
-      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
+      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", Option(reason))
       eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.RESTART, timestamp, reason.getMessage))
 
     case TERMINATE(actorPath, timestamp, info) =>
@@ -75,7 +75,7 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
       Monitor.simpleEvents.put(sender().path.toString, ('O',timestamp))
 
     case RESTART(reason, timestamp) =>
-      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
+      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", Option(reason))
       Monitor.simpleEvents.put(sender().path.toString, ('R',timestamp))
 
     case TERMINATE(actorPath, timestamp, info) =>
@@ -87,9 +87,9 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
     case _ =>
   }
 
-  def logInfo(path:String, event:String, timestamp: Long, info:String, reason:Throwable = null): Unit = {
-    if(Option(reason).isDefined){
-      log.error(reason, s"$event | $timestamp | $path | $info")
+  def logInfo(path: String, event: String, timestamp: Long, info: String, reason: Option[Throwable] = null): Unit = {
+    if (reason.isDefined) {
+      log.error(reason.get, s"$event | $timestamp | $path | $info")
     }else{
       log.info(s"$event | $timestamp | $path | $info")
     }

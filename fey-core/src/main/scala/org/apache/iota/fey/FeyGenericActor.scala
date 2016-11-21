@@ -50,7 +50,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
   /**
     * Keeps reference to the cancellable
     */
-  @volatile private var scheduler: Cancellable = null
+  @volatile private var scheduler: Option[Cancellable] = None
   @volatile private var endBackoff: Long = 0
   private[fey] val monitoring_actor = FEY_MONITOR.actorRef
 
@@ -111,8 +111,8 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * Stops the scheduler
     */
   private final def stopScheduler() = {
-    if (Option(scheduler).isDefined) {
-      scheduler.cancel()
+    if (scheduler.isDefined) {
+      scheduler.get.cancel()
       scheduler = null
     }
   }
@@ -129,14 +129,14 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * The time interval to be used is the one passed to the constructor
     */
   private final def startScheduler() = {
-    if(Option(scheduler).isEmpty && schedulerTimeInterval.toNanos != 0){
-      scheduler = context.system.scheduler.schedule(1.seconds, schedulerTimeInterval){
+    if (scheduler.isEmpty && schedulerTimeInterval.toNanos != 0) {
+      scheduler = Option(context.system.scheduler.schedule(1.seconds, schedulerTimeInterval) {
         try{
           execute()
         }catch{
           case e: Exception => self ! EXCEPTION(e)
         }
-      }
+      })
     }
   }
 
@@ -146,7 +146,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
     * @return true if scheduller is running
     */
   final def isShedulerRunning():Boolean = {
-    if(Option(scheduler).isDefined && !scheduler.isCancelled){
+    if(scheduler.isDefined && !scheduler.get.isCancelled){
       true
     }else{
       false
