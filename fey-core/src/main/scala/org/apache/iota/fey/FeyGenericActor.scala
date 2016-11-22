@@ -113,7 +113,7 @@ abstract class FeyGenericActor(val params: Map[String,String] = Map.empty,
   private final def stopScheduler() = {
     if (scheduler.isDefined) {
       scheduler.get.cancel()
-      scheduler = null
+      scheduler = None
     }
   }
   /**
