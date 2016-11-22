@@ -101,11 +101,11 @@ protected class Trie(systemName: String){
   }
 
   def print:JsValue = {
-    getObject(root, null)
+    getObject(root, None)
   }
 
   def printWithEvents:JsValue = {
-    getObjectEvent(root, null)
+    getObjectEvent(root, None)
   }
 
   def getRootChildren():ArrayBuffer[TrieNode] = {
