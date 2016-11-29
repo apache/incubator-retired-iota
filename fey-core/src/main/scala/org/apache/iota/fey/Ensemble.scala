@@ -163,21 +163,21 @@ protected class Ensemble(val orchestrationID: String,
     */
   private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors:HashMap[String, ActorRef]):(String, ActorRef) = {
     if(!tmpActors.contains(performerID)){
-      val performerInfo = performers_metadata.getOrElse(performerID, null)
-      if(performerInfo != null){
+      val performerInfo = performers_metadata.get(performerID)
+      if (performerInfo.isDefined) {
         val connections: Map[String, ActorRef] = connectionIDs.map(connID => {
           createFeyActor(connID, connectors.getOrElse(connID,Array.empty),tmpActors)
         }).toMap
 
-        var actor:ActorRef = null
-        val actorProps = getPerformer(performerInfo, connections)
-        if(performerInfo.autoScale) {
+        var actor: ActorRef = null
+        val actorProps = getPerformer(performerInfo.get, connections)
+        if(performerInfo.get.autoScale) {
 
-          val resizer = DefaultResizer(lowerBound = performerInfo.lowerBound, upperBound = performerInfo.upperBound,
-            messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = performerInfo.backoffThreshold, backoffRate = 0.1)
+          val resizer = DefaultResizer(lowerBound = performerInfo.get.lowerBound, upperBound = performerInfo.get.upperBound,
+            messagesPerResize = CONFIG.MESSAGES_PER_RESIZE, backoffThreshold = performerInfo.get.backoffThreshold, backoffRate = 0.1)
 
           val strategy =
-            if(performerInfo.isRoundRobin) {
+            if(performerInfo.get.isRoundRobin) {
                log.info(s"Using Round Robin for performer ${performerID}")
                RoundRobinPool(1, Some(resizer))
              } else {
@@ -204,6 +204,7 @@ protected class Ensemble(val orchestrationID: String,
 
   /**
     * Creates actor props based on JSON configuration
+    *
     * @param performerInfo Performer object
     * @param connections connections
     * @return Props of actor based on JSON config
@@ -271,11 +272,11 @@ object Ensemble {
     * @return map of connectors
     */
   def extractConnections(connectors: List[JsObject]): Map[String,Array[String]] = {
-    connectors.map(connector => {
+    connectors.flatMap(connector => {
       connector.keys.map(key => {
         (key, (connector \ key).as[List[String]].toArray)
       }).toMap
-    }).flatten.toMap
+    }).toMap
   }
 
   /**
@@ -296,12 +297,18 @@ object Ensemble {
       if(lowerBound > upperBound){
         throw new IllegalArgumentException(" Could not define performer. Autoscale param: Lower bound greater than upper bound")
       }
-      val threshold: Double = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_BACKOFF_THRESHOLD))
-        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_BACKOFF_THRESHOLD).as[Double] else 0.3
-      val roundRobin: Boolean = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_ROUND_ROBIN))
-        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_ROUND_ROBIN).as[Boolean] else false
-
-
+      val threshold: Double = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_BACKOFF_THRESHOLD)) {
+        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_BACKOFF_THRESHOLD).as[Double]
+      }
+      else {
+        0.3
+      }
+      val roundRobin: Boolean = if (autoScale && (performer \ PERFORMER_AUTO_SCALE).as[JsObject].keys.contains(PERFORMER_ROUND_ROBIN)) {
+        (performer \ PERFORMER_AUTO_SCALE \ PERFORMER_ROUND_ROBIN).as[Boolean]
+      }
+      else {
+        false
+      }
       val jarName: String = (performer \ SOURCE \ SOURCE_NAME).as[String]
       val classPath: String = (performer \ SOURCE \ SOURCE_CLASSPATH).as[String]
       val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])

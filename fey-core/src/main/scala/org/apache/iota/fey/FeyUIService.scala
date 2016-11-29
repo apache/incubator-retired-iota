@@ -38,10 +38,11 @@ object FeyUIService {
 
 class FeyUIService(urlPath: String, port: Int) extends NettyServerComponents with BuiltInComponents {
 
+  val THREAD_SLEEP_TIME = 2000
   lazy val router = Router.from {
     case GET(p"/fey/activeactors") => Action {
       FEY_CORE_ACTOR.actorRef ! JSON_TREE
-      Thread.sleep(2000)
+      Thread.sleep(THREAD_SLEEP_TIME)
       val json = IdentifyFeyActors.generateTreeJson()
       val jsonTree: String = IdentifyFeyActors.getHTMLTree(json)
       Results.Ok(jsonTree).as("text/html")

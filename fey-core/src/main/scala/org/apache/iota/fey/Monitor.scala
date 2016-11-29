@@ -57,7 +57,7 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
       eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.STOP, timestamp, info))
 
     case RESTART(reason, timestamp) =>
-      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
+      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", Option(reason))
       eventsStore.append(sender().path.toString,MonitorEvent(EVENTS.RESTART, timestamp, reason.getMessage))
 
     case TERMINATE(actorPath, timestamp, info) =>
@@ -75,7 +75,7 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
       Monitor.simpleEvents.put(sender().path.toString, ('O',timestamp))
 
     case RESTART(reason, timestamp) =>
-      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", reason)
+      logInfo(sender().path.toString, EVENTS.RESTART, timestamp, "", Option(reason))
       Monitor.simpleEvents.put(sender().path.toString, ('R',timestamp))
 
     case TERMINATE(actorPath, timestamp, info) =>
@@ -87,9 +87,9 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
     case _ =>
   }
 
-  def logInfo(path:String, event:String, timestamp: Long, info:String, reason:Throwable = null) = {
-    if(reason != null){
-      log.error(reason, s"$event | $timestamp | $path | $info")
+  def logInfo(path: String, event: String, timestamp: Long, info: String, reason: Option[Throwable] = None): Unit = {
+    if (reason.isDefined) {
+      log.error(reason.get, s"$event | $timestamp | $path | $info")
     }else{
       log.info(s"$event | $timestamp | $path | $info")
     }
@@ -123,13 +123,13 @@ protected object Monitor{
   }
 
   def mapEventsToRows(actors: ArrayBuffer[TrieNode], prefix:String): ArrayBuffer[String] = {
-    actors.map(actor => {
+    actors.flatMap(actor => {
       val currentPath = if (prefix == "/user/FEY-CORE") actor.path else s"$prefix/${actor.path}"
       val events = actor.events.map(event => {
         getTableLine(currentPath, event.timestamp, event.event, event.info)
       })
       mapEventsToRows(actor.children, currentPath) ++ events
-    }).flatten
+    })
   }
 
   def getSimpleHTMLEvents: String = {
