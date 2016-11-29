@@ -87,7 +87,7 @@ protected class Monitor(eventsStore: Trie) extends Actor with ActorLogging {
     case _ =>
   }
 
-  def logInfo(path: String, event: String, timestamp: Long, info: String, reason: Option[Throwable] = null): Unit = {
+  def logInfo(path: String, event: String, timestamp: Long, info: String, reason: Option[Throwable] = None): Unit = {
     if (reason.isDefined) {
       log.error(reason.get, s"$event | $timestamp | $path | $info")
     }else{

@@ -122,7 +122,7 @@ class MonitorSpec extends BaseAkkaSpec{
     }
     "result in logging error when throwable is specified" in {
       EventFilter[IllegalArgumentException](occurrences = 1) intercept {
-        monitorRef.underlyingActor.logInfo("path", "STOP", 1, "info", new IllegalArgumentException("Test"))
+        monitorRef.underlyingActor.logInfo("path", "STOP", 1, "info", Option(new IllegalArgumentException("Test")))
       }
     }
   }
