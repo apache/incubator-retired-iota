@@ -32,24 +32,27 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
                    override val autoScale: Boolean = false) extends FeyGenericActor {
 
   //-------default params----------
-  var port: Int = 5559
+  val DEFAULT_PORT = 5559
+  var port: Int = DEFAULT_PORT
   var target: String = "localhost"
+  val DEFAULT_LINGER = 200
+  val DEFAULT_HMW = 10
 
   //-------class vars-------------------
   var ctx: ZMQ.Context = null
   var pub: ZMQ.Socket = null
   var count: Int = 0
 
-  override def onStart = {
+  override def onStart: Unit = {
     log.info("Starting ZMQ Publisher")
     try {
-      _params_check()
+      checkParams()
 
       ctx = ZMQ.context(1)
 
       pub = ctx.socket(ZMQ.PUB)
-      pub.setLinger(200)
-      pub.setHWM(10)
+      pub.setLinger(DEFAULT_LINGER)
+      pub.setHWM(DEFAULT_HMW)
       pub.connect("tcp://" + target + ":" + port)
     }
     catch {
@@ -57,23 +60,23 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
     }
   }
 
-  override def onStop = {
+  override def onStop: Unit = {
     pub.disconnect("tcp://" + target + ":" + port)
   }
 
-  override def onRestart(reason: Throwable) = {
+  override def onRestart(reason: Throwable): Unit = {
     // Called after actor is up and running - after self restart
     try {
-      if (pub != null) {
+      if (Option(pub).isDefined) {
         pub.close()
       }
-      if (ctx != null) {
+      if (Option(ctx).isDefined) {
         ctx.close()
       }
       ctx = ZMQ.context(1)
       pub = ctx.socket(ZMQ.PUB)
-      pub.setLinger(200)
-      pub.setHWM(10)
+      pub.setLinger(DEFAULT_LINGER)
+      pub.setHWM(DEFAULT_HMW)
       pub.connect("tcp://" + target + ":" + port)
     }
     catch {
@@ -87,7 +90,7 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
     case x => log.debug(s"Untreated $x")
   }
 
-  override def execute() = {
+  override def execute(): Unit = {
     log.debug(s"Msg count: $count")
   }
 
@@ -96,7 +99,7 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
     message match {
       case message: String =>
         // Assuming each String message has only point data
-        _zmq_send(s"$message")
+        sendZMQ(s"$message")
 
       //      case message: Map[String, (String,String,String,String)] =>
       //        val formatted_msgs: Array[String] = message.map(point => _format_messages(point._2)).toArray
@@ -106,20 +109,20 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
     }
   }
 
-  def _format_messages(fields: (String, String, String, String)): String = {
+  def formatMessages(fields: (String, String, String, String)): String = {
     // The tuple has the following elements: lrn, timestamp, value, type
     // And we have to create a message with the format:
     // DATA|cloud|lrn|timestamp|{"<type>" : <value>}
-    "DATA|cloud|" + fields._1 + "|" + fields._2 + "|" + s"""{"${fields._3}":"${fields._4}"}"""
+    s"""DATA|cloud| ${fields._1}|${fields._2}|{${fields._3}:${fields._4}}"""
   }
 
-  def _zmq_send(Message: String) = {
-    log.debug(s"messsage =$Message")
+  def sendZMQ(Message: String): Unit = {
+    log.debug(s"message =$Message")
     pub.send(Message)
     count += 1
   }
 
-  def _params_check() = {
+  def checkParams(): Unit = {
     if (params.contains("zmq_port")) {
       port = params("zmq_port").toInt
     }
@@ -129,6 +132,7 @@ class ZMQPublisher(override val params: Map[String, String] = Map.empty,
   }
 
 }
+
 
 
 

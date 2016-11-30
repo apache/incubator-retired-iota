@@ -211,6 +211,9 @@ object CONFIG{
   val CONSOLE_APPENDER = "FEY-CONSOLE"
   val CONTROL_AWARE_MAILBOX = "akka.fey-dispatchers.control-aware-dispatcher"
 
+  val DEFAULT_MESSAGE = 500
+  val DEFAULT_PORT = 8080
+
   var CHECKPOINT_DIR = ""
   var JSON_REPOSITORY = ""
   var JSON_EXTENSION = ""
@@ -218,13 +221,13 @@ object CONFIG{
   var CHEKPOINT_ENABLED = true
   var LOG_LEVEL = ""
   var LOG_APPENDER = ""
-  var MESSAGES_PER_RESIZE:Int = 500
+  var MESSAGES_PER_RESIZE: Int = DEFAULT_MESSAGE
   var DYNAMIC_JAR_REPO = ""
   var DYNAMIC_JAR_FORCE_PULL = false
   var CUSTOM_DISPATCHERS: ConfigValue = null
   var MONITORING_ENABLED: Boolean = true
   var MONITORING_TYPE: String = "COMPLETE"
-  var PORT = 8080
+  var PORT = DEFAULT_PORT
   var URL_PATH = "localhost"
 
   def loadUserConfiguration(path: String) : Unit = {

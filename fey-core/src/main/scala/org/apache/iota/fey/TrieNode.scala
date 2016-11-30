@@ -17,7 +17,7 @@
 
 package org.apache.iota.fey
 
-import play.api.libs.json.{JsArray, JsObject, JsValue, Json}
+import play.api.libs.json.{JsObject, JsValue, Json}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
@@ -29,25 +29,27 @@ case class TrieNode(path: String, children: ArrayBuffer[TrieNode], events:ArrayB
 
 protected class Trie(systemName: String){
 
-  private val root: TrieNode = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty)
+  private val DEFAULT_TRIE_NODE = TrieNode(systemName, ArrayBuffer.empty, ArrayBuffer.empty)
+
+  private val root: Option[TrieNode] = Option(DEFAULT_TRIE_NODE)
   var elements: Int = 0
 
   def append(path: String, event: Monitor.MonitorEvent = null): Unit = {
-    append(path.replaceFirst("akka://","").split("/"),root,1,event)
+    append(path.replaceFirst("akka://", "").split("/"), root, 1, event)
   }
 
-  @tailrec private def append(path: Array[String], root: TrieNode, index: Int, event: Monitor.MonitorEvent): Unit = {
-    if(root != null && index < path.length){
-      var nextRoot = root.children.filter(child => child.path == path(index))
+  @tailrec private def append(path: Array[String], root: Option[TrieNode], index: Int, event: Monitor.MonitorEvent): Unit = {
+    if (root.isDefined && index < path.length) {
+      var nextRoot = root.fold(DEFAULT_TRIE_NODE)(identity).children.filter(child => child.path == path(index))
       if(nextRoot.isEmpty){
         nextRoot = ArrayBuffer(TrieNode(path(index), ArrayBuffer.empty, ArrayBuffer.empty))
-        root.children += nextRoot(0)
+        root.fold(DEFAULT_TRIE_NODE)(identity).children += nextRoot(0)
         elements += 1
       }
-      if(event != null && index == path.length - 1){
+      if (Option(event).isDefined && index == path.length - 1) {
         nextRoot(0).events += event
       }
-      append(path, nextRoot(0),index+1, event)
+      append(path, nextRoot.headOption, index + 1, event)
     }
   }
 
@@ -55,13 +57,13 @@ protected class Trie(systemName: String){
     recHasPath(root, path.replaceFirst("akka://","").split("/"),1)
   }
 
-  @tailrec private def recHasPath(root: TrieNode, path: Array[String], index: Int): Boolean = {
-    if(root != null && index < path.length) {
-      var nextRoot = root.children.filter(child => child.path == path(index))
+  @tailrec private def recHasPath(root: Option[TrieNode], path: Array[String], index: Int): Boolean = {
+    if (root.isDefined && index < path.length) {
+      var nextRoot = root.fold(DEFAULT_TRIE_NODE)(identity).children.filter(child => child.path == path(index))
       if(nextRoot.isEmpty){
         false
       }else{
-        recHasPath(nextRoot(0), path, index + 1)
+        recHasPath(nextRoot.headOption, path, index + 1)
       }
     }else{
       true
@@ -72,16 +74,16 @@ protected class Trie(systemName: String){
     recGetNode(root, path.replaceFirst("akka://","").split("/"),1)
   }
 
-  @tailrec private def recGetNode(root: TrieNode, path: Array[String], index: Int): Option[TrieNode]= {
-    if(root != null && index < path.length) {
-      var nextRoot = root.children.filter(child => child.path == path(index))
+  @tailrec private def recGetNode(root: Option[TrieNode], path: Array[String], index: Int): Option[TrieNode] = {
+    if (root.isDefined && index < path.length) {
+      var nextRoot = root.fold(DEFAULT_TRIE_NODE)(identity).children.filter(child => child.path == path(index))
       if(nextRoot.isEmpty){
         None
       }else{
         if(path.length - 1 == index){
             Some(nextRoot(0))
         }else {
-          recGetNode(nextRoot(0), path, index + 1)
+          recGetNode(nextRoot.headOption, path, index + 1)
         }
       }
     }else{
@@ -91,47 +93,47 @@ protected class Trie(systemName: String){
 
   def removeAllNodes(): Unit = {
     var index = 0
-    while(index < root.children.length){
-      root.children.remove(index)
+    while (index < root.fold(DEFAULT_TRIE_NODE)(identity).children.length) {
+      root.fold(DEFAULT_TRIE_NODE)(identity).children.remove(index)
       index += 1
     }
     elements = 0
   }
 
   def print:JsValue = {
-    getObject(root, null)
+    getObject(root, None)
   }
 
   def printWithEvents:JsValue = {
-    getObjectEvent(root, null)
+    getObjectEvent(root, None)
   }
 
   def getRootChildren():ArrayBuffer[TrieNode] = {
-    root.children
+    root.fold(DEFAULT_TRIE_NODE)(identity).children
   }
 
-  private def getObject(root: TrieNode, parent: TrieNode):JsObject = {
-    if(root != null) {
-     Json.obj("name" -> root.path,
-       "parent" -> (if(parent != null) parent.path else "null"),
-        "children" -> root.children.map(getObject(_, root))
+  private def getObject(root: Option[TrieNode], parent: Option[TrieNode]): JsObject = {
+    if (root.isDefined) {
+      Json.obj("name" -> root.fold(DEFAULT_TRIE_NODE)(identity).path,
+       "parent" -> (if (parent.isDefined) parent.fold(DEFAULT_TRIE_NODE)(identity).path else "null"),
+        "children" -> root.fold(DEFAULT_TRIE_NODE)(identity).children.map(a => getObject(Option(a), root))
      )
     }else{
       Json.obj()
     }
   }
 
-  private def getObjectEvent(root: TrieNode, parent: TrieNode):JsObject = {
-    if(root != null) {
-      Json.obj("name" -> root.path,
-        "parent" -> (if(parent != null) parent.path else "null"),
-        "events" -> root.events.map(event => {
+  private def getObjectEvent(root: Option[TrieNode], parent: Option[TrieNode]):JsObject = {
+    if (root.isDefined) {
+      Json.obj("name" -> root.fold(DEFAULT_TRIE_NODE)(identity).path,
+        "parent" -> (if (parent.isDefined) parent.fold(DEFAULT_TRIE_NODE)(identity).path else "null"),
+        "events" -> root.fold(DEFAULT_TRIE_NODE)(identity).events.map(event => {
           Json.obj("type" -> event.event,
           "timestamp" -> event.timestamp,
             "info" -> event.info
           )
         }),
-        "children" -> root.children.map(getObjectEvent(_, root))
+        "children" -> root.fold(DEFAULT_TRIE_NODE)(identity).children.map(a=>getObjectEvent(Option(a), root))
       )
     }else{
       Json.obj()

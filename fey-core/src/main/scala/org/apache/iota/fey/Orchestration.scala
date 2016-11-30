@@ -75,7 +75,7 @@ protected class Orchestration(val name: String,
     }
   }
 
-  override def postStop() = {
+  override def postStop(): Unit = {
     monitoring_actor  ! Monitor.STOP(Utils.getTimestamp)
     log.info(s"STOPPED ${self.path.name}")
   }
