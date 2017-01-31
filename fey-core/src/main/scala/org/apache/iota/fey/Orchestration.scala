@@ -44,6 +44,7 @@ protected class Orchestration(val name: String,
     case CREATE_ENSEMBLES(ensemblesJsonSpec) => createEnsembles(ensemblesJsonSpec)
     case DELETE_ENSEMBLES(ensemblesJsonSpec) => deleteEnsembles(ensemblesJsonSpec)
     case UPDATE_ENSEMBLES(ensemblesJsonSpec) => updateEnsembles(ensemblesJsonSpec)
+    case CREATE_GLOBAL_PERFORMERS_AND_ENSEMBLES(globalSpec, ensembleSpec) => createGlobalsAndEnsembles(globalSpec, ensembleSpec)
 
     case PRINT_PATH =>
       log.info(s"** ${self.path} **")
@@ -64,6 +65,7 @@ protected class Orchestration(val name: String,
 
   override val supervisorStrategy =
     OneForOneStrategy(maxNrOfRetries = 3, withinTimeRange = 1 minute) {
+      case e: RestartGlobalPerformers => akka.actor.SupervisorStrategy.Escalate
       case e: RestartEnsemble => Restart
       case e: Exception => Restart
     }
@@ -103,9 +105,18 @@ protected class Orchestration(val name: String,
     */
   private def replayOrchestrationState() = {
     val ensemblesSpec = ORCHESTRATION_CACHE.orchestration_metadata.get(guid).get.map(_._2).toList
-    ORCHESTRATION_CACHE.orchestration_metadata.remove(guid)
-    ORCHESTRATION_CACHE.orchestration_name.remove(guid)
-    self ! CREATE_ENSEMBLES(ensemblesSpec)
+    val global = ORCHESTRATION_CACHE.orchestration_globals.get(guid)
+    if(global.isDefined){
+      val globalSpec = global.get.map(_._2).toList
+      ORCHESTRATION_CACHE.orchestration_metadata.remove(guid)
+      ORCHESTRATION_CACHE.orchestration_name.remove(guid)
+      ORCHESTRATION_CACHE.orchestration_globals.remove(guid)
+      self ! CREATE_GLOBAL_PERFORMERS_AND_ENSEMBLES(globalSpec, ensemblesSpec)
+    }else{
+      ORCHESTRATION_CACHE.orchestration_metadata.remove(guid)
+      ORCHESTRATION_CACHE.orchestration_name.remove(guid)
+      self ! CREATE_ENSEMBLES(ensemblesSpec)
+    }
   }
 
   /**
@@ -159,6 +170,40 @@ protected class Orchestration(val name: String,
         ORCHESTRATION_CACHE.orchestration_name.put(guid, name)
     }
     Utils.updateOrchestrationState(guid)
+  }
+
+  /**
+    * Creates Ensembles from the json specification and make it
+    * a member of the orchestration Ensembles
+    *
+    * @param ensemblesJsonSpec
+    * @return
+    */
+  private def createGlobalsAndEnsembles(globalSpec: List[JsObject], ensemblesJsonSpec: List[JsObject]) = {
+    log.info(s"Creating global performers: ${globalSpec}")
+    try{
+      // Actor will send message to orchestration to create ensembles once global performers are created
+      val global_manager = context.actorOf(Props(classOf[GlobalPerformer], guid, name, globalSpec, ensemblesJsonSpec), name = "GLOBAL_MANAGER")
+      context.watch(global_manager)
+    }catch{
+      case e: Exception =>
+        log.error(s"Could not create Global Performers manager actor for orchestration $guid")
+        throw new RestartOrchestration(s"Could not create global actors")
+    }
+
+    //Fill orchestration_globals
+    ORCHESTRATION_CACHE.orchestration_globals.get(guid) match {
+      case None =>
+        ORCHESTRATION_CACHE.orchestration_globals.put(guid, (globalSpec.map(global => {
+          val guid = (global \ GUID).as[String]
+          (guid, global)
+        }).toMap))
+      case Some(cachedGlobals) =>
+        ORCHESTRATION_CACHE.orchestration_metadata.put(guid, cachedGlobals ++ (globalSpec.map(global => {
+          val guid = (global \ GUID).as[String]
+          (guid, global)
+        }).toMap))
+    }
   }
 
   /**
@@ -236,6 +281,7 @@ protected object Orchestration{
   case class CREATE_ENSEMBLES(ensemblesJsonSpec: List[JsObject])
   case class DELETE_ENSEMBLES(ensemblesJsonSpec: List[JsObject])
   case class UPDATE_ENSEMBLES(ensemblesJsonSpec: List[JsObject])
+  case class CREATE_GLOBAL_PERFORMERS_AND_ENSEMBLES(globalPerformersSpec: List[JsObject], ensemblesJsonSpec: List[JsObject])
   case object PRINT_PATH
 }
 
@@ -249,5 +295,6 @@ protected object ORCHESTRATION_CACHE{
     * Value = Map[Ensemble GUID, JsObject of the ensemble]
     */
   val orchestration_metadata: HashMap[String, Map[String,JsObject]] = HashMap.empty[String, Map[String,JsObject]]
+  val orchestration_globals : HashMap[String, Map[String,JsObject]] = HashMap.empty[String, Map[String,JsObject]]
   val orchestration_name: HashMap[String, String] = HashMap.empty
 }

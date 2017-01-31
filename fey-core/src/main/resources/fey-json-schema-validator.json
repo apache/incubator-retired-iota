@@ -13,6 +13,101 @@
   "name":{
     "type":"string"
   },
+  "global-performers":{
+    "type":"array",
+    "items": {
+      "guid": {
+        "type": "string"
+      },
+      "controlAware": {
+        "type": "boolean"
+      },
+      "dispatcher": {
+        "type": "string"
+      },
+      "autoScale": {
+        "type": "object",
+        "lowerBound": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "upperBound": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "backoffThreshold": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "roundRobin": {
+          "type": "boolean"
+        },
+        "required": [
+          "lowerBound",
+          "upperBound"
+        ]
+      },
+      "schedule": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "backoff": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "source": {
+        "type": "object",
+        "name": {
+          "type": "string",
+          "pattern": "\\w+(\\.jar)"
+        },
+        "location": {
+          "type": "object",
+          "url": {
+            "type": "string",
+            "pattern": "(?i)(^(http|https|file)):\/\/"
+          },
+          "credentials": {
+            "user": {
+              "type": "string"
+            },
+            "password": {
+              "type": "string"
+            },
+            "required": [
+              "user",
+              "password"
+            ]
+          },
+          "required": [
+            "url"
+          ]
+        },
+        "classPath": {
+          "type": "string",
+          "pattern": "\\w+"
+        },
+        "parameters": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "classPath",
+          "parameters"
+        ]
+      },
+      "required":[
+        "guid",
+        "schedule",
+        "backoff",
+        "source"
+      ]
+    }
+  },
   "ensembles":{
     "type":"array",
     "items":{

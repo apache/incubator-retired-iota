@@ -551,4 +551,61 @@ object Utils_JSONTest {
          }
        ]
      }"""
+
+
+  val global_perf_test =
+    """
+      {
+        "guid":"GLOBAL-PERFORMER",
+        "command":"RECREATE",
+        "timestamp":"12347896906",
+        "name":"recreate global",
+        "global-performers":[
+          {
+            "guid":"GLOBAL-TEST",
+            "schedule":0,
+            "backoff":1000,
+            "source":{
+              "name":"fey-test-actor.jar",
+              "classPath":"org.apache.iota.fey.TestActor",
+              "parameters":{
+                "param-1":"test",
+                "param-2":"test2"
+              }
+            }
+          }
+        ],
+        "ensembles":[
+          {
+            "guid":"ENS-GLOBAL",
+            "command":"NONE",
+            "performers":[
+              {
+                "guid":"PERFORMER-SCHEDULER",
+                "schedule":200,
+                "backoff":0,
+                "autoScale":{
+                  "lowerBound":4,
+                  "upperBound":6
+                },
+                "source":{
+                  "name":"fey-test-actor.jar",
+                  "classPath":"org.apache.iota.fey.TestActor",
+                  "parameters":{
+
+                  }
+                }
+              }
+            ],
+            "connections":[
+              {
+                "PERFORMER-SCHEDULER":[
+                  "GLOBAL-TEST"
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    """
 }

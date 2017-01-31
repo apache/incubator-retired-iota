@@ -26,6 +26,7 @@ import ch.qos.logback.classic.Level
 import play.api.libs.json._
 import java.nio.file.{Files, Paths}
 
+import scala.collection.mutable
 import scala.io.Source
 import scala.concurrent.duration._
 
@@ -33,6 +34,7 @@ class UtilsSpec extends BaseAkkaSpec{
 
   "Global variable loadedJars" should{
     "be empty when starting" in {
+      Utils.loadedJars.remove("fey-test-actor.jar")
       Utils.loadedJars shouldBe empty
     }
   }

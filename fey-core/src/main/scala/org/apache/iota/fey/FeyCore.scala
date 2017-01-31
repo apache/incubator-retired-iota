@@ -25,7 +25,7 @@ import akka.routing.GetRoutees
 import com.eclipsesource.schema._
 import org.apache.iota.fey.GlobalWatchService.REGISTER_WATCHER_PERFORMER
 import org.apache.iota.fey.JSON_PATH._
-import org.apache.iota.fey.Orchestration.{CREATE_ENSEMBLES, DELETE_ENSEMBLES, UPDATE_ENSEMBLES}
+import org.apache.iota.fey.Orchestration.{CREATE_ENSEMBLES, CREATE_GLOBAL_PERFORMERS_AND_ENSEMBLES, DELETE_ENSEMBLES, UPDATE_ENSEMBLES}
 import org.apache.iota.fey.Utils._
 import play.api.libs.json._
 
@@ -105,6 +105,8 @@ protected class FeyCore extends Actor with ActorLogging{
     log.info(s"TERMINATED ${actorRef.path.name}")
     FEY_CACHE.activeOrchestrations.remove(actorRef.path.name)
     ORCHESTRATION_CACHE.orchestration_metadata.remove(actorRef.path.name)
+    ORCHESTRATION_CACHE.orchestration_globals.remove(actorRef.path.name)
+    GlobalPerformer.activeGlobalPerformers.remove(actorRef.path.name)
     if(!FEY_CACHE.orchestrationsAwaitingTermination.isEmpty) {
       checkForOrchestrationWaitingForTermination(actorRef.path.name)
     }
@@ -159,10 +161,12 @@ protected class FeyCore extends Actor with ActorLogging{
     val orchestrationCommand = (orchestrationJSON \ COMMAND).as[String].toUpperCase()
     val orchestrationTimestamp = (orchestrationJSON \ ORCHESTRATION_TIMESTAMP).as[String]
     val ensembles = (orchestrationJSON \ ENSEMBLES).as[List[JsObject]]
+    val globalPerformers = (orchestrationJSON \ GLOBAL_PERFORMERS).asOpt[List[JsObject]]
+
     orchestrationCommand match {
-      case "RECREATE" => recreateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
-      case "CREATE" => createOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
-      case "UPDATE" => updateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp)
+      case "RECREATE" => recreateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp, globalPerformers)
+      case "CREATE" => createOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp, globalPerformers)
+      case "UPDATE" => updateOrchestration(ensembles, orchestrationID, orchestrationName, orchestrationTimestamp, globalPerformers)
       case "DELETE" => deleteOrchestration(orchestrationID,true)
       case x => throw new CommandNotRecognized(s"Command: $x")
     }
@@ -181,13 +185,13 @@ protected class FeyCore extends Actor with ActorLogging{
     * @return
     */
   private def recreateOrchestration(ensemblesSpecJson: List[JsObject], orchestrationID: String,
-                              orchestrationName: String, orchestrationTimestamp: String) = {
+                              orchestrationName: String, orchestrationTimestamp: String, globalPerformers:Option[List[JsObject]]) = {
     FEY_CACHE.activeOrchestrations.get(orchestrationID) match {
       case Some(orchestration) =>
         try{
           // If timestamp is greater than the last timestamp
           if(orchestration._1 != orchestrationTimestamp){
-            val orchestrationInfo = new OrchestrationInformation(ensemblesSpecJson,orchestrationID,orchestrationName,orchestrationTimestamp)
+            val orchestrationInfo = new OrchestrationInformation(ensemblesSpecJson,orchestrationID,orchestrationName,orchestrationTimestamp, globalPerformers)
             FEY_CACHE.orchestrationsAwaitingTermination.put(orchestrationID, orchestrationInfo)
             deleteOrchestration(orchestrationID, true)
           }else{
@@ -196,7 +200,7 @@ protected class FeyCore extends Actor with ActorLogging{
         }catch{
           case e: Exception =>
         }
-      case None => createOrchestration(ensemblesSpecJson,orchestrationID,orchestrationName,orchestrationTimestamp)
+      case None => createOrchestration(ensemblesSpecJson,orchestrationID,orchestrationName,orchestrationTimestamp, globalPerformers)
     }
   }
 
@@ -210,7 +214,7 @@ protected class FeyCore extends Actor with ActorLogging{
       case Some(orchestrationAwaiting) =>
         FEY_CACHE.orchestrationsAwaitingTermination.remove(terminatedOrchestrationName)
         createOrchestration(orchestrationAwaiting.ensembleSpecJson, orchestrationAwaiting.orchestrationID,
-          orchestrationAwaiting.orchestrationName, orchestrationAwaiting.orchestrationTimestamp)
+          orchestrationAwaiting.orchestrationName, orchestrationAwaiting.orchestrationTimestamp, orchestrationAwaiting.globalPerformers)
       case None =>
     }
   }
@@ -226,7 +230,7 @@ protected class FeyCore extends Actor with ActorLogging{
     * @param orchestrationTimestamp
     */
   private def createOrchestration(ensemblesSpecJson: List[JsObject], orchestrationID: String,
-                            orchestrationName: String, orchestrationTimestamp: String) = {
+                            orchestrationName: String, orchestrationTimestamp: String, globalPerformers:Option[List[JsObject]]) = {
     try{
       if(!FEY_CACHE.activeOrchestrations.contains(orchestrationID)) {
         val orchestration = context.actorOf(
@@ -234,7 +238,13 @@ protected class FeyCore extends Actor with ActorLogging{
           name = orchestrationID)
         FEY_CACHE.activeOrchestrations.put(orchestrationID, (orchestrationTimestamp, orchestration))
         context.watch(orchestration)
-        orchestration ! CREATE_ENSEMBLES(ensemblesSpecJson)
+
+        if(globalPerformers.isDefined && globalPerformers.get.size > 0){
+          orchestration ! CREATE_GLOBAL_PERFORMERS_AND_ENSEMBLES(globalPerformers.get, ensemblesSpecJson)
+        }else {
+          orchestration ! CREATE_ENSEMBLES(ensemblesSpecJson)
+        }
+
       }else{
         log.error(s"Orchestration $orchestrationID is already defined in the network.")
       }
@@ -274,8 +284,9 @@ protected class FeyCore extends Actor with ActorLogging{
     }
   }
 
+  // TODO: Check out how to manage global performers for updating
   private def updateOrchestration(ensemblesSpecJson: List[JsObject], orchestrationID: String,
-                            orchestrationName: String, orchestrationTimestamp: String) = {
+                            orchestrationName: String, orchestrationTimestamp: String, globalPerformers:Option[List[JsObject]]) = {
     FEY_CACHE.activeOrchestrations.get(orchestrationID) match {
       case None => log.warning(s"Orchestration not update. No active Orchestration $orchestrationID.")
       case Some(orchestration) => {
@@ -372,4 +383,4 @@ private object FEY_CACHE{
 }
 
 sealed case class OrchestrationInformation(ensembleSpecJson: List[JsObject], orchestrationID: String,
-                                     orchestrationName: String, orchestrationTimestamp: String)
+                                     orchestrationName: String, orchestrationTimestamp: String, globalPerformers:Option[List[JsObject]])
