@@ -225,6 +225,70 @@ class FeyCoreSpec extends BaseAkkaSpec  {
     }
   }
 
+
+  val global_orch_name = "GLOBAL-PERFORMER"
+  var globalRef:ActorRef= null
+
+  "Sending FeyCore.ORCHESTRATION_RECEIVED with CREATE AND GLOBAL performer command to FeyCore" should {
+    s"result in creating an Orchestration child actor with the name '$global_orch_name'" in {
+      feyCoreRef ! FeyCore.ORCHESTRATION_RECEIVED(getJSValueFromString(Utils_JSONTest.global_perf_test), None)
+      orchestrationref = TestProbe().expectActor(s"$feyPath/$global_orch_name")
+    }
+    s"result in creating an Ensemble child actor with the name '$global_orch_name/ENS-GLOBAL'" in {
+      ensemble1ref = TestProbe().expectActor(s"$feyPath/$global_orch_name/ENS-GLOBAL")
+    }
+    s"result in creating a global Performer child actor with the name '$global_orch_name/GLOBAL_MANAGER/GLOBAL-TEST'" in {
+      globalRef = TestProbe().expectActor(s"$feyPath/$global_orch_name/GLOBAL_MANAGER/GLOBAL-TEST")
+    }
+    s"result in creating a Performer child actor with the name '$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER'" in {
+      ensemble2Test1ref = TestProbe().expectActor(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER")
+    }
+    s"result in new entry to FEY_CACHE.activeOrchestrations with key '$global_orch_name'" in {
+      FEY_CACHE.activeOrchestrations should contain key(global_orch_name)
+    }
+    s"result in one global actor created for orchestration" in {
+      GlobalPerformer.activeGlobalPerformers should have size(1)
+      GlobalPerformer.activeGlobalPerformers should contain key(global_orch_name)
+    }
+    s"result in globa metadata add to table" in {
+      ORCHESTRATION_CACHE.orchestration_globals should have size(1)
+      ORCHESTRATION_CACHE.orchestration_globals should contain key(global_orch_name)
+    }
+    s"result in right running actors" in {
+      globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(feyCoreRef.path.toString)
+      Thread.sleep(500)
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/GLOBAL_MANAGER")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/GLOBAL_MANAGER/GLOBAL-TEST")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER")
+    }
+  }
+
+  "Stopping Global actor" should {
+    "result in sending logging error" in {
+      EventFilter.error(pattern = s".*DEAD Global Performer.*", occurrences = 1) intercept {
+        globalRef ! PoisonPill
+      }
+    }
+    "result in orchestration restarted" in {
+      TestProbe().expectActor(s"$feyPath/$global_orch_name/GLOBAL_MANAGER/GLOBAL-TEST")
+      TestProbe().expectActor(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER")
+      TestProbe().expectActor(s"$feyPath/$global_orch_name/ENS-GLOBAL")
+    }
+  }
+
+  "Stopping orchestration with global performer" should {
+    "result in sending TERMINATE message to Monitor actor" in {
+      orchestrationref ! PoisonPill
+      monitor.expectMsgClass(1.seconds, classOf[Monitor.TERMINATE])
+    }
+    "result in no global actors for orchestration" in {
+      GlobalPerformer.activeGlobalPerformers should have size(0)
+      ORCHESTRATION_CACHE.orchestration_globals should have size(0)
+      ORCHESTRATION_CACHE.orchestration_metadata should not contain key(global_orch_name)
+    }
+  }
+
   "Stopping FeyCore" should {
     "result in sending STOP message to Monitor actor" in {
       feyCoreRef ! PoisonPill

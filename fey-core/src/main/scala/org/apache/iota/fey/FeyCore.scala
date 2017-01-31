@@ -102,6 +102,7 @@ protected class FeyCore extends Actor with ActorLogging{
     FEY_CACHE.activeOrchestrations.remove(actorRef.path.name)
     ORCHESTRATION_CACHE.orchestration_metadata.remove(actorRef.path.name)
     ORCHESTRATION_CACHE.orchestration_globals.remove(actorRef.path.name)
+    GlobalPerformer.activeGlobalPerformers.remove(actorRef.path.name)
     if(!FEY_CACHE.orchestrationsAwaitingTermination.isEmpty) {
       checkForOrchestrationWaitingForTermination(actorRef.path.name)
     }
