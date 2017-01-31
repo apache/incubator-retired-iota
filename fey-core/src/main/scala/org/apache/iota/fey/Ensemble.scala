@@ -162,13 +162,8 @@ protected class Ensemble(val orchestrationID: String,
     * @return (performerID, ActorRef of the performer)
     */
   private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors:HashMap[String, ActorRef]):(String, ActorRef) = {
-    // Performer is a global performer and is already created
-    if(GlobalPerformer.activeGlobalPerformers.contains(orchestrationID)
-      && GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.contains(performerID)){
-      (performerID, GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.get(performerID).get)
-    }
-      // performer was already created
-    else if(tmpActors.contains(performerID)){
+    // performer was already created
+    if(tmpActors.contains(performerID)){
       (performerID, tmpActors.get(performerID).get)
     }
     else{
@@ -204,7 +199,13 @@ protected class Ensemble(val orchestrationID: String,
         tmpActors.put(performerID, actor)
         (performerID, actor)
       }else{
-        throw new IllegalPerformerCreation(s"Performer $performerID is not defined in the JSON")
+        // Performer is a global performer and is already created
+        if(GlobalPerformer.activeGlobalPerformers.contains(orchestrationID)
+          && GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.contains(performerID)){
+          (performerID, GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.get(performerID).get)
+        }else {
+          throw new IllegalPerformerCreation(s"Performer $performerID is not defined in the JSON")
+        }
       }
     }
   }

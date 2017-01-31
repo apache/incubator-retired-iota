@@ -275,6 +275,23 @@ class FeyCoreSpec extends BaseAkkaSpec  {
       TestProbe().expectActor(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER")
       TestProbe().expectActor(s"$feyPath/$global_orch_name/ENS-GLOBAL")
     }
+    "all previous actors restarted" in {
+      val routee = """$a"""
+      val routee2 = """$b"""
+      val routee3 = """$c"""
+      val routee4 = """$d"""
+      globalIdentifierRef ! IdentifyFeyActors.IDENTIFY_TREE(s"${feyCoreRef.path.toString}/$global_orch_name")
+      Thread.sleep(500)
+      IdentifyFeyActors.actorsPath should have size (8)
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/GLOBAL_MANAGER")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/GLOBAL_MANAGER/GLOBAL-TEST")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/ENS-GLOBAL")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER/$routee")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER/$routee2")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER/$routee3")
+      IdentifyFeyActors.actorsPath should contain(s"$feyPath/$global_orch_name/ENS-GLOBAL/PERFORMER-SCHEDULER/$routee4")
+    }
   }
 
   "Stopping orchestration with global performer" should {
