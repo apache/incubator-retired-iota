@@ -201,6 +201,7 @@ object JSON_PATH{
   val JAR_CRED_USER = "user"
   val JAR_CRED_PASSWORD = "password"
   val PERFORMER_DISPATCHER = "dispatcher"
+  val GLOBAL_PERFORMERS = "global-performers"
 }
 
 object CONFIG{
@@ -329,3 +330,5 @@ case class IllegalPerformerCreation(message:String)  extends Exception(message)
 case class NetworkNotDefined(message:String)  extends Exception(message)
 case class CommandNotRecognized(message:String)  extends Exception(message)
 case class RestartEnsemble(message:String)  extends Exception(message)
+case class RestartGlobalPerformers(message: String) extends  Exception(message)
+case class RestartOrchestration(message: String) extends  Exception(message)

@@ -162,7 +162,16 @@ protected class Ensemble(val orchestrationID: String,
     * @return (performerID, ActorRef of the performer)
     */
   private def createFeyActor(performerID: String, connectionIDs: Array[String], tmpActors:HashMap[String, ActorRef]):(String, ActorRef) = {
-    if(!tmpActors.contains(performerID)){
+    // Performer is a global performer and is already created
+    if(GlobalPerformer.activeGlobalPerformers.contains(orchestrationID)
+      && GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.contains(performerID)){
+      (performerID, GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.get(performerID).get)
+    }
+      // performer was already created
+    else if(tmpActors.contains(performerID)){
+      (performerID, tmpActors.get(performerID).get)
+    }
+    else{
       val performerInfo = performers_metadata.get(performerID)
       if (performerInfo.isDefined) {
         val connections: Map[String, ActorRef] = connectionIDs.map(connID => {
@@ -178,12 +187,12 @@ protected class Ensemble(val orchestrationID: String,
 
           val strategy =
             if(performerInfo.get.isRoundRobin) {
-               log.info(s"Using Round Robin for performer ${performerID}")
-               RoundRobinPool(1, Some(resizer))
-             } else {
-               log.info(s"Using Smallest mailbox for performer ${performerID}")
-               SmallestMailboxPool(1, Some(resizer))
-             }
+              log.info(s"Using Round Robin for performer ${performerID}")
+              RoundRobinPool(1, Some(resizer))
+            } else {
+              log.info(s"Using Smallest mailbox for performer ${performerID}")
+              SmallestMailboxPool(1, Some(resizer))
+            }
 
           actor = context.actorOf(strategy.props(actorProps), name = performerID)
 
@@ -197,8 +206,6 @@ protected class Ensemble(val orchestrationID: String,
       }else{
         throw new IllegalPerformerCreation(s"Performer $performerID is not defined in the JSON")
       }
-    }else{
-      (performerID, tmpActors.get(performerID).get)
     }
   }
 
