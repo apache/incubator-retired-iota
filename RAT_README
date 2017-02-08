@@ -1,0 +1,27 @@
+================================================================================
+RAT_README
+
+This file contains the list of excluded files that do not contain Apache 
+headers, what these files are used for, and why they don't have Apache headers
+================================================================================
+
+
+To run the RAT report:
+
+1. Install Apache Rat download version 0.11 from  http://creadur.apache.org/rat/
+
+2. Assuming that the iota source tree is in apache-iota-XXX directory,
+   run rat as follows:
+
+  java -jar apache-rat-0.11/apache-rat-0.11.jar  -E apache-iota-XXX/.rat-excludes \
+       -d apache-iota-XXX > rat.out
+
+3. Look at output in rat.out log file for issues
+
+================================================================================
+
+
+--------------------------------------------------------------------------------
+FILE             :  what the file is used for
+                 -> reason why file is excluded
+--------------------------------------------------------------------------------

@@ -1,0 +1,6 @@
+# List of files to exclude from RAT, see RAT_README for details
+# this file
+.rat-excludes*
+# git files
+.gitignore
+.gitattributes
