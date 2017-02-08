@@ -191,7 +191,7 @@
             <attributes>
               <imagesdir>./images</imagesdir>
               <icons>font</icons>
-              <stylesheet>trafodion.css</stylesheet>
+              <stylesheet>iota.css</stylesheet>
               <last-update-label>false</last-update-label>
             </attributes>
           </configuration>
@@ -229,7 +229,7 @@
                 <attributes>
                   <imagesdir>./images</imagesdir>
                   <icons>font</icons>
-                  <stylesheet>trafodion.css</stylesheet>
+                  <stylesheet>iota.css</stylesheet>
                   <last-update-label>false</last-update-label>
                 </attributes>
                 <backend>html5</backend>
