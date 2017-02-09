@@ -4,3 +4,15 @@
 # git files
 .gitignore
 .gitattributes
+# Readme files
+Readme.*
+README.*
+RAT_README
+# JSON files
+fey-json-schema-validator
+invalid-json.json
+raspberry-pi.json
+temperature.json
+timestamp.json
+valid-json.json
+
