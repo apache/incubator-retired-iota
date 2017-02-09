@@ -21,7 +21,7 @@ package org.apache.iota.fey
 import java.nio.file.{Files, Path, Paths, WatchEvent}
 
 import akka.actor.{Actor, ActorLogging, ActorRef}
-import org.apache.iota.fey.GlobalWatchService.{ENTRY_CREATED, REGISTER_WATCHER_PERFORMER}
+import org.apache.iota.fey.GlobalWatchService.REGISTER_WATCHER_PERFORMER
 import org.apache.iota.fey.WatchingDirectories.STOPPED
 
 class GlobalWatchService extends Actor with ActorLogging{

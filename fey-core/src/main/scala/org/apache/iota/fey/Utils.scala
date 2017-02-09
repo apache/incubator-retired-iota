@@ -137,6 +137,7 @@ protected object Utils {
               file.delete()
             }
             ORCHESTRATION_CACHE.orchestration_metadata.remove(orchestrationID)
+            ORCHESTRATION_CACHE.orchestration_globals.remove(orchestrationID)
             ORCHESTRATION_CACHE.orchestration_name.remove(orchestrationID)
           }
         case Some(orch) =>
@@ -145,10 +146,13 @@ protected object Utils {
             case Some(metadata) =>
               val ensembleJSON = metadata.map(ensenble => ensenble._2)
               val name: String = ORCHESTRATION_CACHE.orchestration_name.getOrElse(orchestrationID, "NOT SAVED")
+              val globals = ORCHESTRATION_CACHE.orchestration_globals.getOrElse(orchestrationID, HashMap.empty).map(global => global._2)
+
               val orchestrationSpec = Json.obj(JSON_PATH.GUID -> orchestrationID,
                 JSON_PATH.COMMAND -> "RECREATE",
                 JSON_PATH.ORCHESTRATION_NAME -> name,
                 JSON_PATH.ORCHESTRATION_TIMESTAMP -> System.currentTimeMillis.toString,
+                JSON_PATH.GLOBAL_PERFORMERS -> globals,
                 JSON_PATH.ENSEMBLES -> ensembleJSON
               )
 
