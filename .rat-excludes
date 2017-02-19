@@ -17,5 +17,12 @@ timestamp.json
 valid-json.json
 # BDS-licensed files
 d3Tree.html
+# Sample sensor data files
+background_noise
+door_slam
+sound
+vibration
+
+
 
 
