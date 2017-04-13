@@ -218,24 +218,32 @@ protected class Ensemble(val orchestrationID: String,
     * @return Props of actor based on JSON config
     */
   private def getPerformer(performerInfo: Performer, connections: Map[String, ActorRef]): Props = {
+    var clazz:Option[Class[FeyGenericActor]] = None
 
-    val clazz = loadClazzFromJar(performerInfo.classPath, s"${performerInfo.jarLocation}/${performerInfo.jarName}", performerInfo.jarName)
-
-    val dispatcher = if(performerInfo.dispatcher != "") s"fey-custom-dispatchers.${performerInfo.dispatcher}" else ""
-
-    val actorProps = Props(clazz,
-      performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, performerInfo.autoScale)
-
-    // dispatcher has higher priority than controlAware. That means that if both are defined
-    // then the custom dispatcher will be used
-    if(dispatcher != ""){
-      log.info(s"Using dispatcher: $dispatcher")
-      actorProps.withDispatcher(dispatcher)
+    Utils.loadedJars.synchronized {
+      clazz = Some(loadClazzFromJar(performerInfo.classPath, s"${performerInfo.jarLocation}/${performerInfo.jarName}", performerInfo.jarName))
     }
-    else if(performerInfo.controlAware){
-      actorProps.withDispatcher(CONFIG.CONTROL_AWARE_MAILBOX)
+
+    if(clazz.isDefined) {
+      val dispatcher = if (performerInfo.dispatcher != "") s"fey-custom-dispatchers.${performerInfo.dispatcher}" else ""
+
+      val actorProps = Props(clazz.get,
+        performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, performerInfo.autoScale)
+
+      // dispatcher has higher priority than controlAware. That means that if both are defined
+      // then the custom dispatcher will be used
+      if (dispatcher != "") {
+        log.info(s"Using dispatcher: $dispatcher")
+        actorProps.withDispatcher(dispatcher)
+      }
+      else if (performerInfo.controlAware) {
+        actorProps.withDispatcher(CONFIG.CONTROL_AWARE_MAILBOX)
+      } else {
+        actorProps
+      }
     }else{
-      actorProps
+      log.error(s"Could not load class for performer ${performerInfo.uid}")
+      throw new ClassNotFoundException(s"${performerInfo.jarName} -- ${performerInfo.jarLocation}")
     }
   }
 

@@ -42,6 +42,7 @@ protected object Utils {
     * Keeps the loaded clazz in memory
     * JARNAME,[CLASSPATH, CLASS]
     */
+
   val loadedJars: HashMap[String, (URLClassLoader, Map[String, Class[FeyGenericActor]])]
                 = HashMap.empty[String, (URLClassLoader, Map[String, Class[FeyGenericActor]])]
 
@@ -72,9 +73,11 @@ protected object Utils {
     loadedJars.get(jarName) match {
 
       case None =>
+        log.info(s"Loading Jar: $jarName")
         val urls:Array[URL] = Array(new URL(s"jar:file:$path!/"))
-        val cl: URLClassLoader = URLClassLoader.newInstance(urls)
+        val cl: URLClassLoader = URLClassLoader.newInstance(urls, getClass.getClassLoader)
         val clazz = cl.loadClass(className)
+        log.info(s"Loading Class $className with path $path")
         val feyClazz = clazz.asInstanceOf[Class[FeyGenericActor]]
         log.info(s"$path -> $className")
         loadedJars.put(jarName, (cl, Map(className -> feyClazz)))
@@ -83,6 +86,7 @@ protected object Utils {
       case Some(loadedJar) =>
         loadedJar._2.get(className) match {
           case None =>
+            log.info(s"Loading Class $className with path $path")
             val clazz = loadedJar._1.loadClass(className)
             val feyClazz = clazz.asInstanceOf[Class[FeyGenericActor]]
             loadedJars.put(jarName, (loadedJar._1, Map(className -> feyClazz) ++ loadedJar._2))
