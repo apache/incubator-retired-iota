@@ -31,6 +31,7 @@ import play.api.libs.json._
 
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration._
+import scala.io.Source
 
 protected class FeyCore extends Actor with ActorLogging{
 
@@ -50,6 +51,7 @@ protected class FeyCore extends Actor with ActorLogging{
     case START =>
       val jsonReceiverActor: ActorRef = context.actorOf(Props[JsonReceiverActor], name = JSON_RECEIVER_NAME)
       context.watch(jsonReceiverActor)
+      startSharedPerformers()
 
     case ORCHESTRATION_RECEIVED(orchestrationJson, optionFile) =>
       optionFile match {
@@ -70,11 +72,32 @@ protected class FeyCore extends Actor with ActorLogging{
 
     case Terminated(actor) => processTerminatedMessage(actor)
 
-    case GetRoutees => //Discard
-
     case x =>
       log.info(s"Received $x")
 
+  }
+
+  private def startSharedPerformers() = {
+    var jsonList:List[JsObject] = List.empty
+    if(CONFIG.SHARED_PERFORMER_JSON_PATH.isDefined){
+
+      //reading file
+      val sharedString = Source.fromFile(CONFIG.SHARED_PERFORMER_JSON_PATH.get).getLines().mkString("")
+      val sharedJson = Json.parse(sharedString)
+
+      val result = SchemaValidator.validate(FeyCore.sharedJsonSpec, sharedJson)
+      if (result.isError) {
+        log.error("Incorrect SHARED JSON schema \n" + result.asEither.left.get.toJson.as[List[JsObject]].map(error => {
+          val path = (error \ "instancePath").as[String]
+          val msg = (error \ "msgs").as[List[String]].mkString("\n\t")
+          s"$path \n\tErrors: $msg"
+        }).mkString("\n"))
+      } else {
+        jsonList = (sharedJson \ "shared-performers").as[List[JsObject]]
+      }
+    }
+    val sharedMain: ActorRef = context.actorOf(Props(classOf[CoreSharedPerformers], jsonList), name = SHARED_PERFORMERS_NAME)
+    context.watch(sharedMain)
   }
 
   private def orchestrationReceivedNoFile(json: JsValue) = {
@@ -355,13 +378,11 @@ protected object FeyCore{
 
   final val JSON_RECEIVER_NAME: String = "JSON_RECEIVER"
   final val IDENTIFIER_NAME: String = "FEY_IDENTIFIER"
+  final val SHARED_PERFORMERS_NAME: String = "FEY_SHARED_PERFORMERS"
 
-  /**
-    * Loads the specification for validating a Fey JSON
-    */
-  val jsonSchemaSpec: SchemaType = {
+  val sharedJsonSpec: SchemaType = {
     Json.fromJson[SchemaType](Json.parse(scala.io.Source
-      .fromInputStream(getClass.getResourceAsStream("/fey-json-schema-validator.json"))
+      .fromInputStream(getClass.getResourceAsStream("/shared-json-schema-validator.json"))
       .getLines()
       .mkString(""))).get
   }

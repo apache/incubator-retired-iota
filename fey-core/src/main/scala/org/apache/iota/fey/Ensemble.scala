@@ -41,6 +41,8 @@ protected class Ensemble(val orchestrationID: String,
 
     case STOP_PERFORMERS => stopPerformers()
 
+    case FORCE_RESTART_ENSEMBLE => throw new RestartEnsemble(s"Forcing restart of ensemble. Reason: Shared performer DEAD")
+
     case PRINT_ENSEMBLE =>
       val ed = connectors.map(connector => {
         s""" \t ${connector._1} : ${connector._2.mkString("[",",","]")}"""
@@ -198,14 +200,17 @@ protected class Ensemble(val orchestrationID: String,
         context.watch(actor)
         tmpActors.put(performerID, actor)
         (performerID, actor)
-      }else{
-        // Performer is a global performer and is already created
-        if(GlobalPerformer.activeGlobalPerformers.contains(orchestrationID)
-          && GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.contains(performerID)){
-          (performerID, GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.get(performerID).get)
-        }else {
-          throw new IllegalPerformerCreation(s"Performer $performerID is not defined in the JSON")
-        }
+      }else if(GlobalPerformer.activeGlobalPerformers.contains(orchestrationID)
+        && GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.contains(performerID)){
+        // Performer is a global orchestration performer and is already created
+        (performerID, GlobalPerformer.activeGlobalPerformers.get(orchestrationID).get.get(performerID).get)
+      }else if(CoreSharedPerformers.activeSharedPerformers.contains(performerID)){
+        // Shared performers, level is FeyCore
+        CoreSharedPerformers.ensemblesUsingShared.put((self.path.toString, performerID), self)
+        (performerID, CoreSharedPerformers.activeSharedPerformers.get(performerID).get)
+      }
+      else {
+        throw new IllegalPerformerCreation(s"Performer $performerID is not defined in the JSON")
       }
     }
   }
@@ -354,6 +359,7 @@ object Ensemble {
     */
   case object STOP_PERFORMERS
   case object PRINT_ENSEMBLE
+  case object FORCE_RESTART_ENSEMBLE
 }
 
 /**

@@ -25,37 +25,31 @@ import play.api.libs.json.JsObject
 import scala.collection.mutable.HashMap
 import scala.concurrent.duration._
 
-protected class GlobalPerformer(val orchestrationID: String,
-                                val orchestrationName: String,
-                                val globalPerformers: List[JsObject],
-                                val ensemblesSpec :  List[JsObject]) extends Actor with ActorLogging{
+protected class CoreSharedPerformers(val sharedJson: List[JsObject]) extends Actor with ActorLogging{
 
   val monitoring_actor = FEY_MONITOR.actorRef
-  var global_metadata: Map[String, Performer] = Map.empty[String, Performer]
+  var shared_metadata: Map[String, Performer] = Map.empty[String, Performer]
 
   override def receive: Receive = {
 
-    case GlobalPerformer.PRINT_GLOBAL =>
+    case CoreSharedPerformers.PRINT_GLOBAL =>
       context.actorSelection(s"*") ! FeyGenericActor.PRINT_PATH
+
+    case CoreSharedPerformers.RESTART_SHARED(uuid) =>
+      restartShared(uuid)
 
     case Terminated(actor) =>
       monitoring_actor  ! Monitor.TERMINATE(actor.path.toString, Utils.getTimestamp)
-      log.error(s"DEAD Global Performers ${actor.path.name}")
-      context.children.foreach{ child =>
-        context.unwatch(child)
-        context.stop(child)
-      }
-      throw new RestartGlobalPerformers(s"DEAD Global Performer ${actor.path.name}")
+      log.error(s"DEAD Shared performer: ${actor.path.name} . All the ensembles that uses this performer will be restarted")
+      self ! CoreSharedPerformers.RESTART_SHARED(actor.path.name)
 
-    case GetRoutees => //Discard
-
-    case x => log.warning(s"Message $x not treated by Global Performers")
+    case x => log.warning(s"Message $x not treated by Shared Performers")
   }
 
   /**
-    * If any of the global performer dies, it tries to restart it.
+    * If any of the shared performer dies, it tries to restart it.
     * If we could not be restarted, then the terminated message will be received
-    * and Global Performer is going to throw an Exception to its orchestration
+    * and Shared Performer is going to throw an Exception to its orchestration
     * asking it to Restart all the entire orchestration. The restart will then stop all of its
     * children when call the preStart.
     */
@@ -68,13 +62,11 @@ protected class GlobalPerformer(val orchestrationID: String,
     * Uses the json spec to create the performers
     */
   override def preStart() : Unit = {
-
     monitoring_actor ! Monitor.START(Utils.getTimestamp)
 
-    global_metadata = Ensemble.extractPerformers(globalPerformers)
+    shared_metadata = Ensemble.extractPerformers(sharedJson)
 
-    createGlobalPerformers()
-
+    createSharedPerformers()
   }
 
   override def postStop() : Unit = {
@@ -86,18 +78,37 @@ protected class GlobalPerformer(val orchestrationID: String,
     preStart()
   }
 
-  private def createGlobalPerformers() = {
+  private def restartShared(uuid: String) = {
     try {
-      global_metadata.foreach((global_performer) => {
-        createFeyActor(global_performer._1, global_performer._2)
+      log.warning(s"Restarting Shared Performer ${uuid}")
+      val metadata = shared_metadata.get(uuid)
+      if (metadata.isDefined) {
+        createFeyActor(uuid, metadata.get)
+      } else {
+        log.error(s"Could not restart shared $uuid because metadata is not configured")
+      }
+
+      CoreSharedPerformers.ensemblesUsingShared.keySet.foreach((ensAndShared) => {
+        if (ensAndShared._2 == uuid) {
+          val actor = CoreSharedPerformers.ensemblesUsingShared.get(ensAndShared).get
+          actor ! Ensemble.FORCE_RESTART_ENSEMBLE
+        }
       })
-      context.parent ! Orchestration.CREATE_ENSEMBLES(ensemblesSpec)
-    } catch {
-      /* if the creation fails, it will stop the orchestration */
-      case e: Exception =>
-        log.error(e,"During Global Manager creation")
-        throw new RestartGlobalPerformers("Could not create global performer")
+    }catch{
+      case e: Exception=>
+        log.error(e, s"Could not restart shared $uuid")
     }
+  }
+
+  private def createSharedPerformers() = {
+    shared_metadata.foreach((shared) => {
+      try{
+        createFeyActor(shared._1, shared._2)
+      }catch{
+        case e: Exception =>
+          log.error(e, s"Could not created shared performer ${shared._1}")
+      }
+    })
   }
 
   private def createFeyActor(performerID: String, performerInfo: Performer) = {
@@ -124,10 +135,7 @@ protected class GlobalPerformer(val orchestrationID: String,
     }
 
     context.watch(actor)
-    GlobalPerformer.activeGlobalPerformers.get(orchestrationID) match {
-      case Some(globals) => GlobalPerformer.activeGlobalPerformers.put(orchestrationID, (globals ++ Map(performerID -> actor)))
-      case None => GlobalPerformer.activeGlobalPerformers.put(orchestrationID, Map(performerID -> actor))
-    }
+    CoreSharedPerformers.activeSharedPerformers.put(performerID, actor)
   }
 
   /**
@@ -137,6 +145,7 @@ protected class GlobalPerformer(val orchestrationID: String,
     * @return Props of actor based on JSON config
     */
   private def getPerformer(performerInfo: Performer): Props = {
+
     var clazz:Option[Class[FeyGenericActor]] = None
 
     Utils.loadedJars.synchronized {
@@ -146,8 +155,8 @@ protected class GlobalPerformer(val orchestrationID: String,
     if(clazz.isDefined) {
       val dispatcher = if (performerInfo.dispatcher != "") s"fey-custom-dispatchers.${performerInfo.dispatcher}" else ""
 
-      val actorProps = Props(clazz.get,
-        performerInfo.parameters, performerInfo.backoff, Map.empty, performerInfo.schedule, orchestrationName, orchestrationID, performerInfo.autoScale)
+      val actorProps = Props(clazz.get, performerInfo.parameters, performerInfo.backoff,
+        Map.empty, performerInfo.schedule, self.path.name, self.path.name, performerInfo.autoScale)
 
       // dispatcher has higher priority than controlAware. That means that if both are defined
       // then the custom dispatcher will be used
@@ -182,12 +191,15 @@ protected class GlobalPerformer(val orchestrationID: String,
         throw e
     }
   }
-
 }
 
-object GlobalPerformer{
+object CoreSharedPerformers{
 
-  val activeGlobalPerformers:HashMap[String, Map[String, ActorRef]] = HashMap.empty[String, Map[String, ActorRef]]
+  // [sharedID, actorRef]
+  val activeSharedPerformers:HashMap[String,ActorRef] = HashMap.empty[String,ActorRef]
+  // [[ensembleID, sharedID] -> actorRef]
+  val ensemblesUsingShared:HashMap[Tuple2[String,String], ActorRef] = HashMap.empty[Tuple2[String,String], ActorRef]
 
+  case class RESTART_SHARED(shared_id: String)
   case object PRINT_GLOBAL
 }

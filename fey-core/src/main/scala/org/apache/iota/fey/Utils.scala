@@ -238,6 +238,7 @@ object CONFIG{
   var MONITORING_TYPE: String = "COMPLETE"
   var PORT = DEFAULT_PORT
   var URL_PATH = "localhost"
+  var SHARED_PERFORMER_JSON_PATH: Option[String] = None
 
   def loadUserConfiguration(path: String) : Unit = {
     val app = {
@@ -265,6 +266,7 @@ object CONFIG{
     MONITORING_TYPE = app.getString("monitoring.type").toUpperCase()
     PORT = app.getInt("port")
     URL_PATH = app.getString("urlPath")
+    SHARED_PERFORMER_JSON_PATH = if(app.getString("shared-performers").isEmpty) None else Some(app.getString("shared-performers"))
 
     setLogbackConfiguration()
   }
