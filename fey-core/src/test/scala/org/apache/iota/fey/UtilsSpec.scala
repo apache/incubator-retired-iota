@@ -172,6 +172,7 @@ class UtilsSpec extends BaseAkkaSpec{
       ensembles should have size(1)
       Json.stringify(ensembles(0).as[JsValue]) should equal(Json.stringify(jsonObj))
       new File(s"${CONFIG.CHECKPOINT_DIR}/TEST_ORCHESTRATION_FOR_UTILS.json").delete()
+      FEY_CACHE.activeOrchestrations.remove("TEST_ORCHESTRATION_FOR_UTILS")
     }
   }
 
