@@ -9,10 +9,20 @@ Readme.*
 README.*
 RAT_README
 # JSON files
-fey-json-schema-validator
+fey-json-schema-validator.json
 invalid-json.json
 raspberry-pi.json
 temperature.json
 timestamp.json
 valid-json.json
+# BDS-licensed files
+d3Tree.html
+# Sample sensor data files
+background_noise
+door_slam
+sound
+vibration
+
+
+
 

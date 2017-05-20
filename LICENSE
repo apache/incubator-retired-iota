@@ -199,3 +199,7 @@
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+
+-----------------------------------------------------------------------------
+This product bundles d3, which is available under a "3-clause BSD" license.
+For details, see https://github.com/d3/d3/blob/master/LICENSE.

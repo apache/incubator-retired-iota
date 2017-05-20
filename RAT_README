@@ -8,12 +8,12 @@ headers, what these files are used for, and why they don't have Apache headers
 
 To run the RAT report:
 
-1. Install Apache Rat download version 0.11 from  http://creadur.apache.org/rat/
+1. Install Apache Rat download version 0.12 from  http://creadur.apache.org/rat/
 
 2. Assuming that the iota source tree is in apache-iota-XXX directory,
    run rat as follows:
 
-  java -jar apache-rat-0.11/apache-rat-0.11.jar  -E apache-iota-XXX/.rat-excludes \
+  java -jar apache-rat-0.12/apache-rat-0.12.jar  -E apache-iota-XXX/.rat-excludes \
        -d apache-iota-XXX > rat.out
 
 3. Look at output in rat.out log file for issues
@@ -25,3 +25,20 @@ To run the RAT report:
 FILE             :  what the file is used for
                  -> reason why file is excluded
 --------------------------------------------------------------------------------
+
+.rat-excludes    :  file used by RAT to exclude files 
+                 -> rat does not allow this file to contain comments
+
+The following file has its own BSD license,
+see https://github.com/d3/d3/blob/master/LICENSE
+--> cannot overwrite copyright information, license has been added to
+    LICENSE
+fey-core/src/main/resources/d3Tree.html
+
+The following files are sample sensor data files and can't have
+license text in them.
+
+performers/virtual_sensor/src/main/resources/background_noise
+performers/virtual_sensor/src/main/resources/door_slam
+performers/virtual_sensor/src/main/resources/sound
+performers/virtual_sensor/src/main/resources/vibration
