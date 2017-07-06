@@ -61,6 +61,8 @@ object BuildSettings {
       case PathList("org", "slf4j", xs @ _*)  => MergeStrategy.last
       case PathList("META-INF", "io.netty.versions.properties") => MergeStrategy.last
       case PathList("scala", "xml", xs @ _*)         => MergeStrategy.last
+      case PathList("META-INF", "spring.tooling") => MergeStrategy.last
+      case PathList("org", "aopalliance", xs @ _*) => MergeStrategy.last
       case x =>
         val oldStrategy = (assemblyMergeStrategy in assembly).value
         oldStrategy(x)

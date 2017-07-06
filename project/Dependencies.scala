@@ -37,6 +37,8 @@ object Dependencies {
   val playNetty       = "com.typesafe.play"   %% "play-netty-server"          % "2.5.8"
   val jsonValidator   = "com.eclipsesource"   %% "play-json-schema-validator" % "0.7.0"
 
+  val springframework = "org.springframework" % "spring-context"              % "4.3.9.RELEASE" exclude("commons-logging","commons-logging")
+
   //Logger
   val slf4j           = "com.typesafe.akka"   %% "akka-slf4j"                 % "2.4.10"
   val log4jbind       = "ch.qos.logback"      %  "logback-classic"            % "1.1.7"

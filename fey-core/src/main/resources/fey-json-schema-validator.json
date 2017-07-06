@@ -87,6 +87,9 @@
           "type": "string",
           "pattern": "\\w+"
         },
+        "contextPath": {
+          "type": "string"
+        },
         "parameters": {
           "patternProperties": {
             ".*": {
