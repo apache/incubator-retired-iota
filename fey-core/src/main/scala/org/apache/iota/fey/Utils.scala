@@ -194,6 +194,7 @@ object JSON_PATH{
   val SOURCE: String = "source"
   val SOURCE_NAME: String = "name"
   val SOURCE_CLASSPATH: String = "classPath"
+  val SOURCE_CONTEXTPATH: String = "contextPath"
   val SOURCE_PARAMS: String = "parameters"
   val ORCHESTRATION_NAME = "name"
   val ORCHESTRATION_TIMESTAMP = "timestamp"

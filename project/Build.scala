@@ -23,7 +23,7 @@ object ModuleDependencies {
 
   import Dependencies._
   val FeyDependencies           = compile(akka_actor,typesafe_config,playJson,slf4j,log4jbind,sprayCan,
-                                            sprayRouting,jsonValidator,javaFilter,codec,apacheIO,playNetty) ++ test(akka_testkit, scala_test)
+                                            sprayRouting,jsonValidator,javaFilter,codec,apacheIO,playNetty,springframework) ++ test(akka_testkit, scala_test)
   val StreamDependencies        = provided(akka_actor, fey)
   val ZMQDependencies           = provided(akka_actor,  fey) ++ compile(zmq)
   val VirtualSensorDependencies = provided(akka_actor,  fey) ++ compile(math3)

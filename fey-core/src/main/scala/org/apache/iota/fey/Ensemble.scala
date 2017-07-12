@@ -232,7 +232,8 @@ protected class Ensemble(val orchestrationID: String,
     if(clazz.isDefined) {
       val dispatcher = if (performerInfo.dispatcher != "") s"fey-custom-dispatchers.${performerInfo.dispatcher}" else ""
 
-      val actorProps = Props(clazz.get,
+      val actorProps = if (!performerInfo.contextPath.isEmpty) Props(clazz.get,
+        performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, performerInfo.autoScale, performerInfo.contextPath) else Props(clazz.get,
         performerInfo.parameters, performerInfo.backoff, connections, performerInfo.schedule, orchestrationName, orchestrationID, performerInfo.autoScale)
 
       // dispatcher has higher priority than controlAware. That means that if both are defined
@@ -332,13 +333,14 @@ object Ensemble {
       }
       val jarName: String = (performer \ SOURCE \ SOURCE_NAME).as[String]
       val classPath: String = (performer \ SOURCE \ SOURCE_CLASSPATH).as[String]
+      val contextPath: String = if ( (performer \ SOURCE).as[JsObject].keys.contains(SOURCE_CONTEXTPATH) ) (performer \ SOURCE \ SOURCE_CONTEXTPATH).as[String] else ""
       val params:Map[String,String] = getMapOfParams((performer \ SOURCE \ SOURCE_PARAMS).as[JsObject])
       val controlAware:Boolean = if (performer.keys.contains(CONTROL_AWARE)) (performer \ CONTROL_AWARE).as[Boolean] else false
       val location: String = if ( (performer \ SOURCE).as[JsObject].keys.contains(JAR_LOCATION) ) CONFIG.DYNAMIC_JAR_REPO else CONFIG.JAR_REPOSITORY
       val dispatcher: String = if (performer.keys.contains(PERFORMER_DISPATCHER)) (performer \ PERFORMER_DISPATCHER).as[String] else ""
 
       (id, new Performer(id, jarName, classPath, params, schedule.millisecond, backoff.millisecond,
-        autoScale, lowerBound, upperBound,threshold, roundRobin,controlAware, location, dispatcher))
+        autoScale, lowerBound, upperBound,threshold, roundRobin,controlAware, location, dispatcher, contextPath))
     }).toMap
   }
 
@@ -379,10 +381,11 @@ object Ensemble {
   * @param controlAware
   * @param jarLocation
   * @param dispatcher
+  * @param contextPath
   */
 case class Performer(uid: String, jarName: String,
                      classPath: String, parameters: Map[String,String],
                      schedule: FiniteDuration, backoff: FiniteDuration,
                      autoScale: Boolean, lowerBound: Int, upperBound: Int,
                      backoffThreshold: Double, isRoundRobin: Boolean, controlAware: Boolean,
-                     jarLocation: String, dispatcher: String)
+                     jarLocation: String, dispatcher: String, contextPath: String)
