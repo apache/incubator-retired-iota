@@ -33,11 +33,11 @@ abstract class FeyGenericSpringActor(override val params: Map[String,String] = M
                                     override val autoScale: Boolean = false,
                                     val appContextPath: String = "") extends FeyGenericActor {
 
-  val appContext: ApplicationContext = new ClassPathXmlApplicationContext()(appContextPath)
+  val appContext: ApplicationContext = new ClassPathXmlApplicationContext(appContextPath)
   val factory: AutowireCapableBeanFactory = appContext.getAutowireCapableBeanFactory
 
   override def onStart(): Unit = {
     super.onStart()
-    factory.autowireBeanProperties(this, AutowireCapableBeanFactory.AUTOWIRE_BY_NAME, true)
+    factory.autowireBeanProperties(this, AutowireCapableBeanFactory.AUTOWIRE_BY_TYPE, true)
   }
 }
